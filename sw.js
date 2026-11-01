@@ -1,6 +1,6 @@
 // İnternetsiz çalışma: ilk açılıştan sonra oyun (kod, gömülü sesler, simgeler) cihazda saklanır.
 // Dosya eklenirse SRC listesine ekle; önemli değişiklikte CACHE sürümünü artır.
-const CACHE = 'feza-piril-v167';
+const CACHE = 'feza-piril-ruya-v168';
 const SRC = ['ortak', 'kapi', 'bolum', 'dunya', 'feza', 'piril', 'pofuduk', 'sahne', 'arayuz', 'sarki', 'bolum2', 'dunya2', 'yildiz', 'takim', 'dunya3', 'bulut', 'kuzu', 'sekil', 'ucus', 'bolum3', 'bolum4', 'dunya4', 'deniz', 'inci', 'bolum5', 'anka', 'dunya5', 'volkan', 'atesoyun', 'kristal', 'lavsal', 'bolum6', 'dunya6', 'midilli', 'senlik', 'halka', 'bolum7', 'dunya7', 'geyik', 'kar', 'kardan', 'kizak', 'bolum8', 'dunya8', 'kostum', 'kabak', 'seker', 'kabakyuz', 'iskelet', 'kazan', 'supurge', 'muzik', 'ses', 'oyun', 'bolum9', 'dunya9', 'yavru', 'meyve', 'kanat', 'kolye', 'buyukanne', 'yuva', 'sahne11', 'bolum11', 'dunya11', 'vampir11', 'ayna11', 'pelerin11', 'aynasalon11', 'org11', 'pasta11', 'ucus11', 'balo11', 'sahne12', 'bolum12', 'dunya12', 'anne12', 'etkinlik12', 'final12', 'muzik12'];
 SRC.push('zemin12', 'canli12', 'fezapoz12', 'yolculuk12', 'golet12', 'botanik12', 'bina12');
 SRC.push('gokbahce13', 'sahne13', 'bolum13', 'dunya13', 'fezapoz13', 'anne13', 'ipek13', 'muzik13', 'ses13');
@@ -24,7 +24,7 @@ self.addEventListener('install', e => e.waitUntil((async () => {
 })()));
 self.addEventListener('activate', e => e.waitUntil((async () => {
   // Aynı sitedeki (goktugkarpat.github.io) diğer oyunların önbelleklerine dokunma: yalnız bu oyunun öneki silinir.
-  for (const k of await caches.keys()) if ((k.startsWith('feza-piril-') || k.startsWith('feza-isik-ormani-')) && k !== CACHE) await caches.delete(k);
+  for (const k of await caches.keys()) if ((k.startsWith('feza-piril-v') || k.startsWith('feza-piril-ruya-') || k.startsWith('feza-isik-ormani-')) && k !== CACHE) await caches.delete(k);
   await self.clients.claim();
 })()));
 self.addEventListener('fetch', e => {
