@@ -49,7 +49,7 @@ onları yalnızca ışık şarkısı uyandırır.
 ## Nasıl açılır
 
 - **Bilgisayarda yerel kullanım:** Python kuruluysa, oyun klasöründe bir terminal aç ve `python -m http.server 8000` komutunu çalıştır. Ardından tarayıcıda http://localhost:8000/ adresini aç; sunucuyu oyun açıkken çalışır durumda tut. `index.html` dosyasına çift tıklama davranışı tarayıcıya göre değişebilir; `file://` ile çevrimdışı önbellek kurulmaz.
-- **İnternette:** https://goktugkarpat.github.io/feza-piril/ adresi GitHub Pages'e yayımlanmış sürümü gösterir. Yereldeki değişiklikler yayımlanana kadar bu adreste görünmeyebilir.
+- **İnternette:** https://goktugkarpat.github.io/feza-piril-2d-platformer/ adresi GitHub Pages'e yayımlanmış sürümü gösterir. Yereldeki değişiklikler yayımlanana kadar bu adreste görünmeyebilir.
 - **iPad'de:** Yayımlanmış HTTPS adresini Safari'de açıp Paylaş › **Ana Ekrana Ekle** seçeneğini kullanabilirsin. İlk kullanımda internet bağlantısı ve kaynakların indirilmesi gerekir. Sonraki çevrimdışı kullanım tarayıcının önbelleği korumasına bağlıdır; önbellek temizlenirse yeniden bağlantı gerekir. Bu sürümün gerçek iPad/Safari çevrimdışı kullanımı henüz doğrulanmadı.
 - **GitHub'a göndermek:** `yayinla.command` dosyasına çift tıkla.
 
@@ -84,3 +84,9 @@ onları yalnızca ışık şarkısı uyandırır.
 - **Seslendirme:** tr-TR-EmelNeural kadın sesiyle önceden kaydedilmiş, kırpılmış mp3'ler (`sesler.js`); cümleleri değiştirmek için
   `src/ses.js` düzenlenip `python gen_voice.py` çalıştırılır.
 - Teknik ayrıntı: `src/SPEC.md` (modül sözleşmesi), `src/BOLUM2.md`, `src/BOLUM3.md`, `src/BOLUM5.md` … `src/BOLUM13.md`; kampüs kaynakları ve yerleşim için `src/BOLUM12_KAMPUS_NOTLARI.md`.
+
+## Yapım
+
+Bu oyun, Feza'nın babası **Göktuğ Karpat** (@goktugkarpat) ile yapay zekâ yardımcısı **Claude** (Anthropic) birlikte çalışarak yapılmıştır.
+Tasarım ve kararlar ailenindir; kod, çizim ve seslendirme düzenlemeleri Claude ile birlikte yazılmıştır.
+Oyun yalnızca Feza için, kâr amacı olmadan yapılmış bir aile projesidir.
