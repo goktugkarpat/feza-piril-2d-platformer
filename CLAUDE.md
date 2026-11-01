@@ -12,7 +12,7 @@
 - Test: her zaman `?sessiz`; `?atla` başlık ve açılışı atlar; `?atlanir` açılışı dokunuşla atlanabilir yapar.
 - iPad uygulaması: `manifest.webmanifest`, `sw.js` (dosya eklenirse `SRC`/`CORE`'a ekle, önemli değişiklikte `CACHE` sürümünü artır;
   önek `feza-piril-2d-platformer-` (eski `feza-piril-vNN`, `feza-piril-ruya-` ve `feza-isik-ormani-` önbellekleri de temizlenir; `feza-piril-3d-arpg-` önbelleğine DOKUNMAZ), eski önbellek silerken yalnız bu önekler), `icons/`.
-- GitHub'a SADECE ebeveyn "yükle / GitHub'a gönder" dediğinde gönder (depo: goktugkarpat/feza-piril-2D-Platformer, `main`).
+- GitHub'a SADECE ebeveyn "yükle / GitHub'a gönder" dediğinde gönder (depo: goktugkarpat/feza-piril-2d-platformer, `main`).
   `yayinla.command` ilk seferde depoyu oluşturup GitHub Pages'ı açar.
 - Bölümler ("her gece başka bir rüya"): Bölüm 1 `bolum.js`, Bölüm 2 (Yıldız Gölü) `bolum2.js`, Bölüm 3 (Bulut Ülkesi) `bolum3.js` (+ `dunya3 bulut kuzu sekil ucus`); `index.html` `?bolum=N` > `sessionStorage 'fezaIsikSec'` > 1 ile birini yükler (`BOLUM_NO`); başlık sayfası hep Bölüm 1'dir ve seçim sahnesini (`SAHNE.secim`) gösterir; her bölüm sabah finaliyle biter, sonuç kartı "odaya dön" ile seçime döner. Kayıt: `fezaIsikTamam`, `fezaIsikSon`. Ayrıntı: `src/BOLUM2.md`, `src/BOLUM3.md` (Bölüm 3 sözleşmesi + ajan notları). Test: `?bolum=N`, `?atla`.
 - Mini oyun kapısı (`src/kapi.js`, nesne `miniKapi`): şarkı (B1), takımyıldızı (B2) ve bulut şekilleri (B3) bitene kadar hemen ilerisine ışık perdesi gerilir (`bolum*.js`'te `bagId` ile bağlanır); çocuk dokunmazsa Pırıl kendisi tamamlar (sarki/takim/sekil geç yardım), yani asla takılmaz.
