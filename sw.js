@@ -1,14 +1,15 @@
 // İnternetsiz çalışma: ilk açılıştan sonra oyun (kod, gömülü sesler, simgeler) cihazda saklanır.
 // Dosya eklenirse SRC listesine ekle; önemli değişiklikte CACHE sürümünü artır.
-const CACHE = 'feza-piril-2d-platformer-v169';
+const CACHE = 'feza-piril-2d-platformer-v171';
 const SRC = ['ortak', 'kapi', 'bolum', 'dunya', 'feza', 'piril', 'pofuduk', 'sahne', 'arayuz', 'sarki', 'bolum2', 'dunya2', 'yildiz', 'takim', 'dunya3', 'bulut', 'kuzu', 'sekil', 'ucus', 'bolum3', 'bolum4', 'dunya4', 'deniz', 'inci', 'bolum5', 'anka', 'dunya5', 'volkan', 'atesoyun', 'kristal', 'lavsal', 'bolum6', 'dunya6', 'midilli', 'senlik', 'halka', 'bolum7', 'dunya7', 'geyik', 'kar', 'kardan', 'kizak', 'bolum8', 'dunya8', 'kostum', 'kabak', 'seker', 'kabakyuz', 'iskelet', 'kazan', 'supurge', 'muzik', 'ses', 'oyun', 'bolum9', 'dunya9', 'yavru', 'meyve', 'kanat', 'kolye', 'buyukanne', 'yuva', 'sahne11', 'bolum11', 'dunya11', 'vampir11', 'ayna11', 'pelerin11', 'aynasalon11', 'org11', 'pasta11', 'ucus11', 'balo11', 'sahne12', 'bolum12', 'dunya12', 'anne12', 'etkinlik12', 'final12', 'muzik12'];
 SRC.push('zemin12', 'canli12', 'fezapoz12', 'yolculuk12', 'golet12', 'botanik12', 'bina12');
 SRC.push('gokbahce13', 'sahne13', 'bolum13', 'dunya13', 'fezapoz13', 'anne13', 'ipek13', 'muzik13', 'ses13');
+SRC.push('isil');
 SRC.push('zengin13','sahne14','bolum14','cosmos14','dunya14','aile14','ogret14','uzay14','muzik14','ses14');
 // Uzay manzaraları yerel Canvas atlaslarıyla çizilir; kullanılmayan fotoğrafları indirme.
 // Bölüm 12 kampüs bina katmanları (göğü saydam; dunya12.js). Yüklenmezse o binanın yerinde ağaçlar/tepeler görünür.
 const KAMPUS_ART = ['lojman', 'orta-cim-v2', 'fens', 'universite-merkezi', 'fass-cim-v1', 'bilgi-merkezi', 'kule-cevre', 'golet'].map(n => './assets/kampus/' + n + '-katman.png');
-const CORE = ['./', './index.html', './sesler.js', './sesler12.js', './sesler13.js', './sesler14.js', './manifest.webmanifest', ...SRC.map(n => './src/' + n + '.js')];
+const CORE = ['./', './index.html', './sesler.js', './sesler12.js', './sesler13.js', './sesler14.js', './sesler_isil.js', './manifest.webmanifest', ...SRC.map(n => './src/' + n + '.js')];
 const ICONS = ['./icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];   // eksik simge kurulumu durdurmasın
 const FRESH = /(\/|index\.html)$/;   // sayfa önce ağ, diğer dosyalar önce önbellek
 // Yeni oyun önbelleği eski HTTP/CDN dosyalarıyla dolmasın. Çalışırken

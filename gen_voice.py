@@ -117,6 +117,13 @@ def bolum14(key):
     # New companion bank also carries only the five new B12/B13 prompts.
     # --bolum14 never rewrites the established voice banks.
     return re.match(r"^(p|an|a)_uz_", key) is not None or key == "p_q_ekmek" or key.startswith("p_ip_oyuncak_")
+OUT_ISIL = os.path.join(ROOT, "sesler_isil.js")   # Işıl (Bölüm 3 finali) anlatıcı cümleleri: a_is_
+
+
+def bolumisil(key):
+    return key.startswith("a_is_")
+
+
 SRC = os.path.join(ROOT, "src", "ses.js")
 
 
@@ -259,9 +266,10 @@ async def main():
     only12 = "--bolum12" in sys.argv
     only13 = "--bolum13" in sys.argv
     only14 = "--bolum14" in sys.argv
+    onlyisil = "--isil" in sys.argv
     if sum((only12, only13, only14)) > 1:
         sys.exit("Choose one chapter output at a time")
-    lines = {k: t for k, t in all_lines.items() if bolum14(k)} if only14 else {k: t for k, t in all_lines.items() if bolum13(k) and not bolum14(k)} if only13 else {k: t for k, t in all_lines.items() if bolum12(k) and not bolum14(k)} if only12 else all_lines
+    lines = {k: t for k, t in all_lines.items() if bolumisil(k)} if onlyisil else {k: t for k, t in all_lines.items() if bolum14(k)} if only14 else {k: t for k, t in all_lines.items() if bolum13(k) and not bolum14(k)} if only13 else {k: t for k, t in all_lines.items() if bolum12(k) and not bolum14(k)} if only12 else all_lines
     if "--hepsi" in sys.argv:
         for k, t in lines.items():
             if os.path.exists(cache_path(k, t)):
@@ -289,6 +297,9 @@ async def main():
     if missing:
         print("MISSING (existing voice bank preserved):", ", ".join(missing))
         sys.exit(1)
+    if onlyisil:
+        write_out(OUT_ISIL, mp3, dur, True)
+        return
     if only14:
         write_out(OUT14, mp3, dur, True)
         return
@@ -301,7 +312,9 @@ async def main():
     if not only12 and not only13:
         k14 = [k for k in mp3 if bolum14(k)]
         write_out(OUT14, {k: mp3[k] for k in k14}, {k: dur[k] for k in k14}, True)
-        rest = [k for k in mp3 if not bolum12(k) and not bolum13(k) and not bolum14(k)]
+        kis = [k for k in mp3 if bolumisil(k)]
+        write_out(OUT_ISIL, {k: mp3[k] for k in kis}, {k: dur[k] for k in kis}, True)
+        rest = [k for k in mp3 if not bolumisil(k) and not bolum12(k) and not bolum13(k) and not bolum14(k)]
         write_out(OUT, {k: mp3[k] for k in rest}, {k: dur[k] for k in rest}, False)
         keep = {os.path.basename(cache_path(k, t)) for k, t in all_lines.items()}
         for f in os.listdir(CACHE):  # drop recordings of lines that no longer exist and temp leftovers
@@ -313,7 +326,9 @@ def write_out(path, mp3, dur, part12):
     temp_out = path + ".tmp"
     with open(temp_out, "w", encoding="utf-8", newline="\n") as f:   # LF also on Windows (the Mac commits it)
         if part12:   # loaded after sesler.js: adds to the same tables
-            if path == OUT14:
+            if path == OUT_ISIL:
+                f.write("// Feza ve Pırıl – Işıl (Bölüm 3 finali) anlatıcı sesleri; python3 gen_voice.py --isil.\n")
+            elif path == OUT14:
                 f.write("// Feza ve Pırıl – Annemle Yıldız Yolculuğu ve yeni B12/B13 ipuçları; python3 gen_voice.py --bolum14.\n")
             elif path == OUT13:
                 f.write("// Feza ve Pırıl – İpek Göğü sesleri; python3 gen_voice.py --bolum13.\n")

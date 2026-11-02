@@ -109,6 +109,9 @@ const SES = (() => {
     "p_b_selam": "Bak Feza! Bulut arkadaşlarımız bize el sallıyor!",
     "p_b_tepe": "İşte Gökkuşağı Tepesi! Kuzucuklar da seninle geldi. Hadi, en tepeye çık!",
     "p_b_bitti": "Gökkuşağı geri geldi! Ne kadar da güzel!",
+    "a_is_gel": "Bak, Işıl geldi! Gökkuşağının yunikornu.",
+    "a_is_bin": "Işıl'ın sırtına bin! Sıkı tutun, kayıyoruz!",
+    "a_is_in": "Işıl'la gökkuşağından kaydık! Ne güzel bir gündü.",
     "a_b_final1": "Yedi Bulut Kuzucuğu gökyüzünde yan yana dizilmiş ve kocaman bir gökkuşağı olmuş. Feza ile Pırıl, gökkuşağından kayarak inmişler.",
     "a_b_final2": "Sabah olunca, Feza yatağında gözlerini açmış. Pencereden bakmış ki, gökyüzünde kocaman bir gökkuşağı! Pırıl da ona göz kırpmış.",
     "a_b_final3": "Ve her gece, yeni bir macera onları bekliyordu...",
@@ -1240,6 +1243,9 @@ const SES = (() => {
     setTimeout(() => { if (sesUcusta()) soyle('p_b_ucus2'); }, 11000);   // uçuşun ortasında bir sevinç cümlesi
   });
   OLAY.on('ucusBitti', () => { sesUcusOlay = false; sesUcusBitti = true; });
+  OLAY.on('isilGel', () => soyle('a_is_gel', { oncelik: 3 }));
+  OLAY.on('isilBin', () => soyle('a_is_bin', { oncelik: 3 }));
+  OLAY.on('isilInis', () => setTimeout(() => soyle('a_is_in', { oncelik: 3 }), 1200));
   OLAY.on('gokkusagiBasla', () => { sesGokBasladi = true; soyle('p_b_bitti', { oncelik: 3 }); });
   OLAY.on('sekil', e => { if (!(e && e.hayvan === 'feza')) setTimeout(() => soyle('p_b_sekil3'), 1200); });   // Feza şeklinde sekil.js 'p_b_sekil4' der; söylendiyse tekrar edilmez
   // Uzun sessizlikte küçük dostça sözler (en çok 3 kez, en az 90 sn arayla; Feza oynarken, uçuş/sahne dışında, kimse konuşmuyorken)

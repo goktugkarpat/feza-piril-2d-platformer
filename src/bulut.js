@@ -620,8 +620,9 @@ function buTuyCiz(L, col) {   // tüy: ince sap + yumuşak yelpaze (orijinde, ya
 // ───────────────────────── gokkusagi: final tepesi ─────────────────────────
 // Yay: merkez (cx, cy), dış yarıçap R (Feza dış kenarda kayar), 7 bant (kırmızı dışta → mor içte). Kuzucuklar yayın üstünde,
 // yarıçap R+115'te, açı 125°→35° arasında renkI sırasıyla (soldan sağa) durur: o.yayX[i], o.yayY[i].
-const BU_GK_EVRE = { bekle: 0, kuzu: 1, bant: 2, tam: 3, sicra: 4, kay: 5, son: 6 };
-const BU_T = { kuzu: 2.4, bantAra: 0.42, bantSure: 0.9, sicra: 0.75, sonBekle: 1.3 };
+const BU_GK_EVRE = { bekle: 0, kuzu: 1, bant: 2, tam: 3, isil: 3.5, sicra: 4, kay: 5, son: 6 };
+const BU_T = { kuzu: 2.4, bantAra: 0.42, bantSure: 0.9, sicra: 0.75, sonBekle: 1.3, isilGel: 2.7, isilBin: 0.9, sonIsil: 4.4 };
+function buIsilVar() { return typeof ISIL !== 'undefined' && ISIL && typeof ISIL.ciz === 'function'; }
 function buKuzular() { const L = []; for (let i = 0; i < NESNELER.length; i++) if (NESNELER[i].tip === 'kuzu') L.push(NESNELER[i]); return L; }
 function buKuzuTurVar() { const h = TUR.al('kuzu'); return !!(h && (typeof h.dokun === 'function' || typeof h.guncelle === 'function')); }
 function buHepsiRenkli(o) {
@@ -686,6 +687,13 @@ TUR.kaydet('gokkusagi', {
       for (let i = 0; i < 20; i++) { const a = Math.PI * Math.random(), p = buYay(o, o.R - o.bant * 3.5 + (Math.random() - 0.5) * 100, a); parca(p.x, p.y, (Math.random() - 0.5) * 80, -40 - Math.random() * 60, 1.6, BU_R_GK[i % 8], 6 + Math.random() * 6); }
     }
     const tSicra = tTam + 0.6;
+    if (o.evre === BU_GK_EVRE.tam && t >= tSicra && buIsilVar() && !o.isil) {   // Işıl (yunikorn) süzülerek gelir
+      const hx = P.x - 95;
+      o.isil = { faz: 'gel', t0: t, iz: [], x: hx - 640, y: buYuzeyY(hx) - 470, rot: 0, poz: 'kay', hiz: 1, hop: 0, feza: false, sev: 0, hx: hx, hy: buYuzeyY(hx), sx: hx - 640, sy: buYuzeyY(hx) - 470, goster: true };
+      P.f = 1; try { OLAY.emit('isilGel', o); } catch (e) {}
+      o.evre = BU_GK_EVRE.isil;
+    }
+    if (o.evre === BU_GK_EVRE.isil) buIsilAdim(o, t);
     if (o.evre === BU_GK_EVRE.tam && t >= tSicra) {   // Feza yayın tepesine sıçrar
       o.evre = BU_GK_EVRE.sicra; o.s0x = P.x; o.s0y = P.y; o.ts = t; P.f = 1;
       OLAY.emit('ziplama', P);
@@ -695,6 +703,7 @@ TUR.kaydet('gokkusagi', {
       const x = lerp(o.s0x, hx, smooth(u)), tep = Math.min(o.s0y, hy) - 70;
       const y = (1 - u) * (1 - u) * o.s0y + 2 * u * (1 - u) * tep + u * u * hy;   // ikinci derece Bezier yayı
       P.x = x; P.y = y; P.vx = 0; P.vy = u < 0.5 ? -400 : 300; P.ground = false; P.poz = u > 0.75 ? 'kayma' : null; P.kaymaAci = 0;
+      if (o.isil) { P.poz = 'kayma'; buIsilKonum(o, dt, 'sicra', u, 0); }
       
       if (u >= 1) { o.evre = BU_GK_EVRE.kay; o.tk = t; o.fi = 0; o.v = 70; P.poz = 'kayma'; buSfx('kayma', 1); OLAY.emit('kayma', o); }
     }
@@ -702,6 +711,7 @@ TUR.kaydet('gokkusagi', {
       o.v = Math.min(o.v + 155 * dt, 440); o.fi += o.v * dt / o.R;
       const p = buYay(o, o.R, Math.PI / 2 - o.fi);
       P.x = p.x; P.y = p.y; P.vx = o.v * Math.cos(o.fi); P.vy = 0; P.ground = false; P.f = 1; P.poz = 'kayma'; P.kaymaAci = o.fi;
+      if (o.isil) buIsilKonum(o, dt, 'kay', 0, o.fi);
       // Gökkuşağı kaydırağı izi: arkada kalan prizmatik neşe parçacıkları ve ışık izi noktaları
       if (!o.kayIz) o.kayIz = [];
       o.kayIz.push({ x: P.x, y: P.y, fi: o.fi, t: now });
@@ -758,6 +768,7 @@ TUR.kaydet('gokkusagi', {
         }
         OLAY.emit('inis', { x: P.x, y: P.y, siddet: 500 });
         o.evre = BU_GK_EVRE.son; o.tSon = t;
+        if (o.isil) { o.isil.faz = 'in'; o.isil.tIn = t; o.isil.vIn = Math.min(o.v, 260); try { OLAY.emit('isilInis', o); } catch (e) {} }
       }
     }
 
@@ -775,7 +786,10 @@ TUR.kaydet('gokkusagi', {
       if (tr.t >= tr.max) { o.tunelRings.splice(i, 1); }
     }
 
-    if (o.evre === BU_GK_EVRE.son && !o.done && t - o.tSon >= BU_T.sonBekle) {
+    if (o.isil && o.evre === BU_GK_EVRE.son && !o.done) { P.kilit = Math.max(P.kilit || 0, 0.6); buIsilKonum(o, dt, 'son', 0, 0); }
+    if (o.isil) buIsilIz(o);
+    if (o.evre === BU_GK_EVRE.son && !o.done && t - o.tSon >= (o.isil ? BU_T.sonIsil : BU_T.sonBekle)) {
+      if (o.isil) P.isilDe = false;
       o.done = true; o.uyandi = true; P.kilit = Math.max(P.kilit || 0, 4);
       OLAY.emit('gokkusagiTamam', o);
     }
@@ -934,6 +948,7 @@ TUR.kaydet('gokkusagi', {
     g.restore();
     TUR.al('gokkusagi').ayakCiz(o, tm);
   },
+  cizOn(o, tm) { if (o.isil && o.isil.goster) buIsilCiz(o, tm); },
   ayakCiz(o, tm) {   // (ciz'in sonunda çağrılır: Feza'nın ARKASINDA kalsın)
     // yayın zeminden çıktığı ve zemine değdiği yerlerde yumuşak ışık bulutları (ayaklar bulutlara karışır)
     if (o.evre === BU_GK_EVRE.bekle) return;
@@ -948,6 +963,59 @@ TUR.kaydet('gokkusagi', {
     g.globalCompositeOperation = 'source-over';
   },
 });
+// ── Işıl (isil.js): gökkuşağı finalinde Feza'yı sırtında kaydırır ──
+function buIsilKonum(o, dt, faz, u, fi) {   // P.x,P.y = Işıl'ın toynak noktası; Feza Işıl'ın sırtında çizilir
+  const I = o.isil; I.goster = true; P.isilDe = true;
+  if (faz === 'sicra') { I.poz = 'sicra'; I.hop = 0; I.rot = clamp(Math.atan2(P.vy, 300) * 0.35, -0.5, 0.35); I.hiz = 0.8; I.x = P.x; I.y = P.y; I.feza = true; }
+  else if (faz === 'kay') { I.poz = 'kay'; I.hop = 0; I.hiz = 1; I.x = P.x; I.y = P.y; I.rot = fi; I.feza = true; }
+  else {   // iniş: yumuşak konma, yavaşlama, Feza iner, el sallama ve sevinç
+    const ts = o.t - I.tIn;
+    if (ts === 0 || I.xx === undefined) { I.xx = I.x; }
+    const v = I.vIn * Math.exp(-ts * 2.6); I.xx += v * dt; I.x = I.xx; I.y = buYuzeyY(I.x); I.rot = lerp(I.rot, 0, 1 - Math.exp(-dt * 7));
+    I.hiz = clamp(v / 200, 0, 1);
+    I.poz = ts < 0.9 ? (v > 60 ? 'tırıs' : 'dur') : ts < 1.9 ? 'dur' : 'sal';
+    if (ts >= 1.6 && !I.indi) { I.indi = true; I.dx0 = P.x; I.dy0 = P.y; I.tInd = o.t; }
+    I.hop = 0;
+    if (ts > 2.1) I.hop = Math.abs(Math.sin((ts - 2.1) * 6)) * 14 * Math.max(0, 1 - (ts - 2.1) / 2.0);   // sevinç sıçramaları
+    I.sev = ts > 2.0 ? clamp((ts - 2.0) / 0.3, 0, 1) : 0;
+    I.feza = !I.indi;
+    if (!I.indi) { P.x = I.x; P.y = I.y; P.vx = 0; P.ground = true; P.poz = null; }
+    else {
+      const k = clamp((o.t - I.tInd) / 0.7, 0, 1), tx = I.x + 90, ty = buYuzeyY(tx);
+      P.x = lerp(I.dx0, tx, smooth(k)); P.y = lerp(I.dy0, ty, k) - Math.sin(k * Math.PI) * 55; P.vx = 0; P.vy = 0; P.ground = k >= 1; P.poz = null; P.f = -1;
+      P.isilDe = false; if (P.a_side != null) P.a_side = -1;
+      if (k >= 1 && !I.indiOlay) { I.indiOlay = true; burst(P.x, P.y - 6, 10, BU_R_GK, 120, 1, 7); }
+    }
+    if (I.poz === 'sal' && Math.random() < dt * 14) parca(I.x + 20 + Math.random() * 60, I.y - 130 + Math.random() * 90, (Math.random() - 0.5) * 50, -40 - Math.random() * 40, 1.2, BU_GK[Math.floor(Math.random() * 7)], 5 + Math.random() * 5);
+  }
+}
+function buIsilIz(o) {
+  const I = o.isil; if (I.poz !== 'kay' && I.poz !== 'sicra') { if (I.iz.length) I.iz.shift(); return; }
+  I.iz.push({ x: I.x, y: I.y }); while (I.iz.length > 46) I.iz.shift();
+}
+function buIsilAdim(o, t) {   // gel → bin (Feza sırta sıçrar) → sicra
+  const I = o.isil, ts = t - I.t0; I.goster = true;
+  if (I.faz === 'gel') {
+    const u = clamp(ts / BU_T.isilGel, 0, 1), ug = clamp(u / 0.8, 0, 1), arc = Math.pow(1 - ug, 2);
+    I.x = lerp(I.sx, I.hx, 1 - Math.pow(1 - ug, 2)) + (u > 0.8 ? (u - 0.8) / 0.2 * 36 : 0); I.y = lerp(I.hy, I.sy, arc) - Math.sin(ug * Math.PI) * 30;
+    I.rot = u < 0.8 ? clamp(0.5 * (1 - ug), 0, 0.5) : 0;
+    I.poz = u < 0.8 ? 'kay' : u < 0.97 ? 'tırıs' : 'dur'; I.hiz = u < 0.8 ? 1 : 0.4; I.hop = 0; I.feza = false;
+    if (u < 0.8 && Math.random() < 0.6) parca(I.x - 20, I.y - 30, -60 - Math.random() * 80, 20 + Math.random() * 40, 1.1, BU_GK[Math.floor(Math.random() * 7)], 4 + Math.random() * 5);
+    if (ts >= BU_T.isilGel) { I.faz = 'bin'; I.t1 = t; I.fx0 = P.x; I.fy0 = P.y; I.x = I.hx + 36; I.y = buYuzeyY(I.x); burst(I.x, I.y - 70, 14, BU_R_GK, 140, 1.1, 8); }
+  } else {   // bin: Feza sırtına sıçrar
+    const u = clamp((t - I.t1) / BU_T.isilBin, 0, 1), sx = I.x + ISIL.SEAT.x, sy = I.y + ISIL.SEAT.y + 6;
+    I.poz = 'dur'; I.hiz = 0; I.rot = 0; I.feza = false; I.hop = 0;
+    P.x = lerp(I.fx0, sx, smooth(u)); P.y = lerp(I.fy0, sy, smooth(u)) - Math.sin(u * Math.PI) * 60; P.vx = 0; P.vy = 0; P.ground = false; P.poz = 'kayma'; P.kaymaAci = 0; P.isilDe = true;
+    if (u >= 1) { P.x = I.x; P.y = I.y; I.feza = true; I.faz = 'sicra'; o.evre = BU_GK_EVRE.tam; try { OLAY.emit('isilBin', o); } catch (e) {} }
+  }
+}
+function buIsilCiz(o, tm) {
+  const I = o.isil; ISIL.iz(I.iz, tm);
+  ISIL.ciz(g, I.x, I.y, I.rot, { poz: I.poz, hiz: I.hiz, hop: I.hop, sevinc: I.sev > 0.5 ? 1 : undefined }, tm);
+  const ruz = I.poz === 'kay' || I.poz === 'sicra' ? 0.9 : 0.1;
+  if (I.feza) ISIL.fezaCiz(I.x, I.y, I.rot, { hop: I.hop, sevinc: I.poz === 'sal' ? I.sev : undefined, ruzgar: ruz }, tm);
+  else if (I.faz === 'bin') ISIL.fezaCiz(P.x - ISIL.SEAT.x, P.y - ISIL.SEAT.y - 6, 0, { ruzgar: 0.3 }, tm);
+}
 function buAyakAci(o, i) {   // yayın zeminden çıktığı (0) / zemine değdiği (1) noktanın canvas açısı (π..2π)
   const q = o.ayak && o.ayak[i]; if (!q) return i ? BU_PI2 : Math.PI;
   let a = Math.atan2(q.y - o.cy, q.x - o.cx); if (a < 0) a += BU_PI2; return a;
