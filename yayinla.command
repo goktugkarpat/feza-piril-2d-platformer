@@ -15,7 +15,7 @@ git add -A
 if git diff --cached --quiet; then
   echo "Yeni değişiklik yok."
 else
-  git commit -q -m "Güncelleme: $(date '+%Y-%m-%d %H:%M')" -m "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>" && echo "Değişiklikler kaydedildi."
+  git commit -q -m "Güncelleme: $(date '+%Y-%m-%d %H:%M')" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" -m "Co-authored-by: Codex <codex@openai.com>" && echo "Değişiklikler kaydedildi."
 fi
 if ! git remote get-url origin >/dev/null 2>&1; then
   if gh repo create "$DEPO" --public --source . --remote origin --push; then

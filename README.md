@@ -87,6 +87,6 @@ onları yalnızca ışık şarkısı uyandırır.
 
 ## Yapım
 
-Bu oyun, Feza'nın babası **Göktuğ Karpat** (@goktugkarpat) ile yapay zekâ yardımcısı **Claude** (Anthropic) birlikte çalışarak yapılmıştır.
-Tasarım ve kararlar ailenindir; kod, çizim ve seslendirme düzenlemeleri Claude ile birlikte yazılmıştır.
+Bu oyun, Feza'nın babası **Göktuğ Karpat** (@goktugkarpat) ile yapay zekâ yardımcıları **Claude** (Anthropic) ve **Codex** (OpenAI) birlikte çalışarak yapılmıştır.
+Tasarım ve kararlar ailenindir; kod, çizim ve seslendirme düzenlemeleri Claude ve Codex ile birlikte yazılmıştır.
 Oyun yalnızca Feza için, kâr amacı olmadan yapılmış bir aile projesidir.
