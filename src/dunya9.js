@@ -38,7 +38,7 @@ function dn9Bolge(x){const B=typeof BOLUM!=='undefined'&&BOLUM.bolgeler;if(B){fo
 const dn9Yk=(c,x,y,w,h,r)=>{c.beginPath();if(c.roundRect)c.roundRect(x,y,w,h,r);else c.rect(x,y,w,h);};
 
 // ════════ Günün saati: konuma bağlı (0 sabah → 1 şelale serinliği → 2 şeftali-pembe → 3 gün batımı → 4 alacakaranlık) ════════
-const DN9_GUNX=[[0,0],[190*T,.18],[236*T,.5],[262*T,1],[372*T,1],[404*T,1.35],[440*T,1.92],[560*T,2.08],[602*T,2.3],[640*T,2.7],
+const DN9_GUNX=[[0,0],[190*T,.18],[236*T,.5],[262*T,1],[372*T,1],[404*T,1.35],[440*T,1.92],[520*T,2.1],[560*T,2.3],[602*T,2.6],[640*T,2.8],
  [690*T,3],[735*T,3.3],[768*T,3.75],[800*T,4]];
 function dn9GunX(x){
  const L=DN9_GUNX;if(x<=L[0][0])return L[0][1];
@@ -161,16 +161,16 @@ function dn9FxArt(){
 const DN9_GOKR=[
  [[0,'#86c8ee'],[.34,'#a6daf2'],[.6,'#cbeef2'],[.8,'#f2f4dc'],[1,'#ffe6c6']],
  [[0,'#58b6d2'],[.38,'#84d4dc'],[.66,'#b8eee2'],[.86,'#dcfaee'],[1,'#effff4']],
- [[0,'#86aade'],[.32,'#bcb4e2'],[.58,'#f0bed2'],[.82,'#ffcfb2'],[1,'#ffe2ba']],
- [[0,'#5658ac'],[.28,'#9474c0'],[.52,'#e48cb6'],[.72,'#ffa48e'],[.88,'#ffbe7e'],[1,'#ffdc9c']],
+ [[0,'#8cb0e0'],[.3,'#c6b8e0'],[.54,'#f6c6c6'],[.78,'#ffd29e'],[1,'#ffe6a6']],
+ [[0,'#6258b0'],[.26,'#a674c2'],[.5,'#f088b2'],[.7,'#ff9c84'],[.88,'#ffb66e'],[1,'#ffd890']],
  [[0,'#1c1a4a'],[.28,'#36296c'],[.52,'#633c8a'],[.74,'#a65c98'],[.9,'#e08a80'],[1,'#f4bc80']]];
 function dn9GokArt(i){
  if(DN9.gok[i])return DN9.gok[i];
  const R=rng(9001+i*31),cv=dn9Cv(768,600),c=cv.getContext('2d');let gr=c.createLinearGradient(0,0,0,600);
  for(const [u,col] of DN9_GOKR[i])gr.addColorStop(u,col);c.fillStyle=gr;c.fillRect(0,0,768,600);
  // güneş tarafında sıcak ışık, ufukta pus
- const gx=[200,260,420,500,520][i],gy=[120,90,190,420,560][i],gc=['255,250,226','236,255,246','255,232,214','255,206,150','255,170,120'][i];
- let h=c.createRadialGradient(gx,gy,10,gx,gy,[420,380,460,520,480][i]);h.addColorStop(0,'rgba('+gc+','+[.55,.45,.5,.6,.45][i]+')');h.addColorStop(.4,'rgba('+gc+',.16)');h.addColorStop(1,'rgba('+gc+',0)');c.fillStyle=h;c.fillRect(0,0,768,600);
+ const gx=[200,260,420,500,520][i],gy=[120,90,190,420,560][i],gc=['255,250,226','236,255,246','255,228,176','255,200,140','255,170,120'][i];
+ let h=c.createRadialGradient(gx,gy,10,gx,gy,[420,380,460,520,480][i]);h.addColorStop(0,'rgba('+gc+','+[.55,.45,.62,.66,.45][i]+')');h.addColorStop(.4,'rgba('+gc+',.16)');h.addColorStop(1,'rgba('+gc+',0)');c.fillStyle=h;c.fillRect(0,0,768,600);
  // yumuşak renk lekeleri (suluboya)
  for(let j=0;j<22;j++){const x=R()*768,y=40+R()*380,r=60+R()*120;h=c.createRadialGradient(x,y,1,x,y,r);
   const col=[['255,255,255','200,236,255','255,236,220'],['220,255,250','170,240,230','255,255,255'],['255,214,230','214,200,255','255,236,214'],['255,170,190','200,150,230','255,200,150'],['120,80,170','200,110,170','90,70,160']][i][j%3];
@@ -269,7 +269,7 @@ function dn9EjderArt(p){
  F.ejder[p]={gv,kn,kk};return F.ejder[p];
 }
 // gökte süzülenler: [x evresi, y (gök oranı), ölçek, hız, evre, yön, yavru (arkasından minik biri)]
-const DN9_EJ=[[.1,.16,.85,7,0,1,1],[.55,.1,.58,5,2.1,1,0],[.8,.26,.5,6,4.2,-1,0],[.35,.3,.42,4,1.3,-1,1]];
+const DN9_EJ=[[.1,.16,.85,7,0,1,1],[.55,.1,.58,5,2.1,1,0],[.8,.26,.5,6,4.2,-1,0],[.35,.3,.42,4,1.3,-1,1],[.93,.19,1.12,8,3.3,-1,0],[.47,.4,.3,3,5.1,1,0]];
 function dn9EjderCiz(x,y,s,yon,kanat,p,a){
  const E=dn9EjderArt(p);g.globalAlpha=a;g.save();g.translate(x,y);g.scale(s*yon,s);
  const ky=Math.max(-.7,Math.min(1,kanat));   // kanat açısı: 1 yukarı, -0.7 aşağı
@@ -324,6 +324,102 @@ function dn9Adalar(tm,vw,vh,gokAlt,ak,sira){
   const im=dn9AdaArt(v,0);if(y-im.height*s*.3>gokAlt)continue;
   for(let pp=0;pp<2;pp++){const w=pp?ak:1-ak;if(w<.02)continue;const A=dn9AdaArt(v,pp);g.globalAlpha=wa*w*(.75+.25*(i%2));g.drawImage(A,x-A.width*s/2,y-A.height*s*.3,A.width*s,A.height*s);}
   g.globalAlpha=1;}
+}
+
+// ════════ Vadinin simgeleri (uzak ve orta derinlikte, dünyaya bağlı): ejderha kuleleri, uyuyan ejderha biçimli yosunlu kaya, kayaya
+//          oyulmuş yuvarlak kapılı ejderha evi, pul taşlı kemer köprü, dev çiçekler, kristal gölet, fener dizisi. Bir kez boyanır. ════════
+const DN9_SMW=[150,360,260,380,220,300,320],DN9_SMH=[340,200,240,170,280,130,150];
+function dn9SimgeArt(v,p,uz){
+ const F=DN9.fx;if(!F.simge)F.simge={};const ad=v+'_'+p+'_'+uz;if(F.simge[ad])return F.simge[ad];
+ const W0=DN9_SMW[v],H0=DN9_SMH[v],cv=dn9Cv(W0,H0),c=cv.getContext('2d'),R=rng(4410+v*53),isik=[];
+ const tr=col=>p?dn9Mix(dn9Mix(col,'#5a3c8c',uz?.5:.34),'#ff9a80',uz?.12:.09):dn9Mix(col,'#c4e2f2',uz?.46:.16);
+ const tas=tr('#b4a8cc'),tasA=tr('#d0c6e2'),tasK=tr('#8f84ae'),cim=tr('#62ae84'),cimA=tr('#86c8a0'),odun=tr('#8a6048'),isikR=tr('#ffe6a4');
+ c.lineJoin='round';c.lineCap='round';
+ const el=(x,y,rx,ry,col,rot)=>{c.fillStyle=col;c.beginPath();c.ellipse(x,y,rx,ry,rot||0,0,6.283);c.fill();};
+ const pul=(x0,y0,w,h,r,col,a)=>{c.strokeStyle=col;c.lineWidth=1.6;c.globalAlpha=a;let j=0;for(let y=y0;y<y0+h;y+=r*.95,j++)for(let x=x0+(j%2?r:0);x<x0+w+r;x+=r*2){c.beginPath();c.arc(x,y,r,.1,3.04);c.stroke();}c.globalAlpha=1;};
+ const tepe=(x,rx)=>{el(x,H0-4,rx,15,cim);c.fillStyle=cimA;c.beginPath();c.ellipse(x,H0-8,rx*.9,9,0,Math.PI,0);c.fill();};
+ const pencere=(x,y,r)=>{el(x,y,r+3,r+3,tasK);el(x,y,r,r,isikR);c.strokeStyle=tasK;c.lineWidth=2;c.beginPath();c.moveTo(x-r,y);c.lineTo(x+r,y);c.moveTo(x,y-r);c.lineTo(x,y+r);c.stroke();isik.push({x:x,y:y,r:r*2.4,c:0});};
+ const fener=(x,y,r,col)=>{c.strokeStyle=odun;c.lineWidth=1.4;c.beginPath();c.moveTo(x,y-r-5);c.lineTo(x,y-r);c.stroke();el(x,y,r*.8,r,tr(col));el(x-r*.2,y-r*.3,r*.3,r*.4,'rgba(255,255,255,.6)');el(x,y-r,r*.5,r*.25,odun);isik.push({x:x,y:y,r:r*2.6,c:0});};
+ if(v===0){   // ejderha kulesi: pul kiremitli kubbe, yuvarlak pencereler, tepesinde iki yuvarlak boynuz ve flama
+  el(75,340,75,56,DN9_SDOLGU[1][p]);   // kendi tepeciği (yeşil tepelerle aynı renk: onlara karışır)
+  c.fillStyle=tas;c.beginPath();c.moveTo(42,292);c.lineTo(50,116);c.quadraticCurveTo(75,104,100,116);c.lineTo(108,292);c.closePath();c.fill();
+  c.save();c.clip();c.fillStyle=tasA;c.fillRect(42,100,22,200);pul(40,124,70,170,11,tasK,.4);c.restore();
+  c.fillStyle=tasA;dn9Yk(c,38,110,74,12,6);c.fill();
+  c.fillStyle=tr('#ec8fb2');c.beginPath();c.moveTo(36,114);c.quadraticCurveTo(46,54,75,26);c.quadraticCurveTo(104,54,114,114);c.closePath();c.fill();
+  c.save();c.clip();pul(34,40,82,74,9,tr('#ffc6da'),.75);c.restore();
+  el(64,28,5,9,tr('#ffd27a'),-.4);el(86,28,5,9,tr('#ffd27a'),.4);
+  c.strokeStyle=odun;c.lineWidth=2;c.beginPath();c.moveTo(75,26);c.lineTo(75,4);c.stroke();c.fillStyle=tr('#b89cff');c.beginPath();c.moveTo(75,4);c.quadraticCurveTo(90,6,98,12);c.quadraticCurveTo(88,14,75,16);c.fill();
+  pencere(75,152,11);pencere(75,208,9);
+  c.fillStyle=odun;c.beginPath();c.arc(75,290,15,Math.PI,0);c.lineTo(90,292);c.lineTo(60,292);c.fill();
+ }else if(v===1){   // uyuyan ejderha biçimli yosunlu kaya (taştan; gözü kapalı, gülümser)
+  tepe(180,170);
+  el(46,172,36,20,tasK,-.3);el(28,160,14,10,tas,-.6);                 // kıvrık kuyruk
+  el(150,140,112,60,tas);                                            // gövde
+  c.save();c.beginPath();c.ellipse(150,140,112,60,0,0,6.283);c.clip();el(120,104,90,34,tasA);pul(40,112,220,90,13,tasK,.42);c.restore();
+  for(let k=0;k<6;k++){const x=74+k*30,d=(x-150)/112,y=140-60*Math.sqrt(1-d*d)+3;c.fillStyle=k%2?cim:cimA;c.beginPath();c.arc(x,y,12,Math.PI,0);c.fill();}   // yosunlu sırt ibiği
+  el(282,150,62,46,tas);el(324,164,30,22,tas);el(268,128,40,20,tasA,-.2);
+  el(262,109,8,10,tasA,-.35);el(287,105,8,10,tasA,.1);el(240,126,14,7,cimA,-.7);          // yuvarlak boynuzlar, yosunlu kulak
+  c.strokeStyle=tr('#6a6088');c.lineWidth=3.4;c.beginPath();c.arc(296,144,10,.2,2.94);c.stroke();   // kapalı, mutlu göz
+  c.beginPath();c.arc(322,172,14,.5,2.2);c.lineWidth=2.6;c.stroke();                               // gülümseme
+  el(338,158,2.6,2.6,tr('#6a6088'));el(310,166,9,5.5,'rgba(255,150,180,.5)');
+  for(let k=0;k<7;k++){const x=70+R()*180,y=96+R()*22;el(x,y,2.6,2.6,tr(DN9_CICEK[k%8]));}
+ }else if(v===2){   // kayaya oyulmuş ejderha evi: yuvarlak kapı ve pencereler, pul kiremitli çatı, iki boynuz
+  el(98,58,10,20,tr('#ffd27a'),-.45);el(162,58,10,20,tr('#ffd27a'),.45);
+  c.fillStyle=tas;c.beginPath();c.ellipse(130,150,108,92,0,0,6.283);c.fill();
+  c.save();c.clip();el(96,110,70,50,tasA);
+  c.fillStyle=tr('#ec8fb2');c.fillRect(0,40,260,76);pul(14,58,236,58,12,tr('#ffc6da'),.8);
+  c.fillStyle=tr('#ec8fb2');for(let x=30;x<240;x+=24){c.beginPath();c.arc(x,114,12,0,Math.PI);c.fill();}
+  pul(20,150,220,90,14,tasK,.3);c.restore();
+  tepe(130,124);
+  el(130,192,36,36,tr('#ffe6b0'));el(130,192,31,31,odun);el(130,192,24,24,tr('#a87858'));c.strokeStyle=odun;c.lineWidth=2;c.beginPath();c.moveTo(130,168);c.lineTo(130,216);c.stroke();el(144,194,3.4,3.4,tr('#ffd27a'));
+  pencere(66,160,15);pencere(194,160,15);pencere(130,134,9);
+  fener(84,204,7,'#ffd27a');
+ }else if(v===3){   // pul taşlı kemer köprü, altında ışıltılı dere, korkuluğunda fenerler
+  tepe(40,44);tepe(340,44);el(190,164,118,7,tr('#8fe4ee'));el(170,163,60,3,'rgba(255,255,255,.55)');
+  c.fillStyle=tas;c.beginPath();c.moveTo(8,150);c.quadraticCurveTo(190,38,372,150);c.lineTo(372,170);c.lineTo(318,170);c.quadraticCurveTo(190,74,62,170);c.lineTo(8,170);c.closePath();c.fill();
+  c.save();c.clip();pul(0,50,380,120,12,tasK,.42);c.restore();
+  c.strokeStyle=tasA;c.lineWidth=7;c.beginPath();c.moveTo(12,146);c.quadraticCurveTo(190,34,368,146);c.stroke();
+  for(let k=0;k<=6;k++){const t=k/6,x=12+356*t,y=146-224*t*(1-t);c.fillStyle=tasA;dn9Yk(c,x-4,y-22,8,22,4);c.fill();el(x,y-24,6,6,k%3===0?tr('#ffd27a'):tasA);if(k%2===1)fener(x,y-36,6,['#ffd27a','#ff9fc0','#b89cff'][(k>>1)%3]);}
+  c.strokeStyle=tasA;c.lineWidth=3;c.beginPath();c.moveTo(12,128);c.quadraticCurveTo(190,16,368,128);c.stroke();
+ }else if(v===4){   // dev çiçekler
+  tepe(110,96);
+  const sap=(x0,x1,y1)=>{c.strokeStyle=tr('#4e9a6e');c.lineWidth=7;c.beginPath();c.moveTo(x0,272);c.quadraticCurveTo(x0+(x1-x0)*.2,(272+y1)/2,x1,y1);c.stroke();el((x0+x1)/2-14,(272+y1)/2+20,20,8,cimA,-.5);el((x0+x1)/2+16,(272+y1)/2+44,20,8,cim,.5);};
+  sap(64,50,120);sap(118,112,64);sap(160,176,138);
+  for(let k=0;k<8;k++){const a=k/8*6.283;el(112+Math.cos(a)*26,64+Math.sin(a)*26,17,17,tr(k%2?'#ff9fc0':'#ffc0d6'));}el(112,64,16,16,tr('#ffd27a'));el(107,59,6,5,'rgba(255,255,255,.5)');
+  for(let k=0;k<6;k++){const a=k/6*6.283+.4;el(50+Math.cos(a)*19,120+Math.sin(a)*19,13,13,tr(k%2?'#b89cff':'#d9c8ff'));}el(50,120,11,11,tr('#fff0a0'));
+  c.fillStyle=tr('#ffc29a');c.beginPath();c.moveTo(152,140);c.quadraticCurveTo(150,104,164,100);c.quadraticCurveTo(170,112,176,100);c.quadraticCurveTo(182,112,190,100);c.quadraticCurveTo(204,106,200,140);c.quadraticCurveTo(176,162,152,140);c.fill();
+  el(166,128,8,12,'rgba(255,255,255,.35)');
+ }else if(v===5){   // kristal gölet
+  tepe(150,140);el(150,102,112,22,tr('#5cc8d8'));el(150,100,104,18,tr('#8fe4ee'));el(120,96,50,5,'rgba(255,255,255,.5)');el(186,106,30,3,'rgba(255,255,255,.4)');
+  const kr=(x,y,w,h,ci)=>{const col=tr(DN9_KALP[ci%3]);c.fillStyle=col;c.beginPath();c.moveTo(x-w,y);c.lineTo(x-w*.8,y-h*.7);c.quadraticCurveTo(x,y-h*1.08,x+w*.8,y-h*.7);c.lineTo(x+w,y);c.closePath();c.fill();
+   c.fillStyle='rgba(255,255,255,.4)';c.beginPath();c.moveTo(x-w*.7,y);c.lineTo(x-w*.6,y-h*.66);c.quadraticCurveTo(x-w*.2,y-h*.95,x,y-h*.9);c.lineTo(x-w*.1,y);c.closePath();c.fill();isik.push({x:x,y:y-h*.6,r:h*.9,c:1+ci%3});};
+  kr(44,104,13,62,0);kr(68,112,10,38,1);kr(252,102,14,72,2);kr(228,112,10,42,0);kr(150,86,9,34,1);kr(24,112,8,26,2);
+  for(let k=0;k<6;k++)el(70+R()*160,94+R()*14,1.6,1.6,'rgba(255,255,255,.9)');
+ }else{   // iki direk arasına asılı fener dizisi
+  tepe(36,34);tepe(284,34);
+  c.strokeStyle=odun;c.lineWidth=7;c.beginPath();c.moveTo(36,140);c.lineTo(36,34);c.moveTo(284,140);c.lineTo(284,34);c.stroke();
+  c.lineWidth=4;c.beginPath();c.arc(44,30,8,Math.PI,.6);c.stroke();c.beginPath();c.arc(276,30,8,2.54,0);c.stroke();
+  c.lineWidth=1.8;c.beginPath();c.moveTo(36,36);c.quadraticCurveTo(160,112,284,36);c.stroke();
+  for(let k=1;k<=7;k++){const t=k/8,x=36+248*t,y=36+152*t*(1-t);fener(x,y+15,9,['#ffd27a','#ff9fc0','#b89cff','#9ff0c8'][k%4]);}
+ }
+ cv.isik=isik;F.simge[ad]=cv;return cv;
+}
+// [sütun, çeşit, uzak mı, ölçek, y kayması, yön]
+const DN9_SIMGE=[[376,0,1,.5,0,1],[392,2,0,.8,0,1],[420,4,0,.78,6,1],[436,0,1,.72,-8,1],[447,1,0,.82,4,1],[474,3,0,.8,-4,1],[498,0,1,.56,4,1],
+ [502,5,0,.8,10,1],[528,2,0,.68,-6,-1],[553,6,0,.8,2,1],[566,0,1,.8,-12,1],[578,1,0,.7,6,-1],[603,4,0,.7,4,-1],[628,0,1,.6,0,1]];
+const DN9_SIMGER=['#ffd8a0','#c8a8ff','#ffd27a','#9ff0c8'];
+function dn9Simgeler(tm,vw,uz,base,alt,ak){
+ const cx=cam.x+VW*.5,f=uz?.1:.28,L=DN9_SIMGE,on=.16+DN9.renk*.3+ak*.3+DN9.fin*.2;
+ for(let i=0;i<L.length;i++){const e=L[i];if(e[2]!==uz)continue;
+  const v=e[1],s=e[3],w=DN9_SMW[v]*s,h=DN9_SMH[v]*s,x=vw*.5+(e[0]*T-cx)*f,y=base+e[4]-h;
+  if(x+w/2<0||x-w/2>vw||y>=alt)continue;
+  let im=null;
+  for(let pp=0;pp<2;pp++){const ww=pp?ak:1-ak;if(ww<.02)continue;im=dn9SimgeArt(v,pp,uz);g.globalAlpha=pp&&ww<.99?ww:1;
+   if(e[5]<0){g.save();g.translate(x,y);g.scale(-1,1);g.drawImage(im,-w/2,0,w,h);g.restore();}else g.drawImage(im,x-w/2,y,w,h);}
+  g.globalAlpha=1;
+  if(im&&im.isik.length){g.globalCompositeOperation='lighter';const I=im.isik;
+   for(let j=0;j<I.length;j++){const q=I[j],qx=x+(q.x-DN9_SMW[v]/2)*s*e[5],qy=y+q.y*s;if(qy>alt)continue;dn9Glow(DN9_SIMGER[q.c],qx,qy,q.r*s,q.r*s,on*(.8+.2*Math.sin(tm*1.3+q.x*.3+i)));}
+   g.globalCompositeOperation='source-over';}}
 }
 
 // ════════ Uzak şeritler: 0 uzak dağ sırası, 1 yeşil tepeler, 2 çiçekli ağaç sırası, 3 yakın çalılar, 4 bulut denizi (yükseklerde),
@@ -1017,13 +1113,14 @@ function dn9Backdrop(tm){
    g.globalAlpha=wl*(pp&&w<.99?w:(!pp&&ak>.01&&l!==5?1:w));for(let x=-off;x<vw;x+=Wd)dn9SeritCiz(img,x,y0,vw,alt);g.globalAlpha=1;}
   const yd=base+DN9_EXT-1;if(alt>yd){g.globalAlpha=wl;g.fillStyle=l===5?DN9_SDOLGU[5][0]:dn9Mix(DN9_SDOLGU[l][0],DN9_SDOLGU[l][1],ak);g.fillRect(0,yd,vw,alt-yd);g.globalAlpha=1;}
   dn9SeritFx(tm,l,((cam.x*f)%DN9_SW[l]+DN9_SW[l])%DN9_SW[l],y0,alt,wl);
-  if(l===0)dn9DagCiz(tm,vw,vh,tab[1]+30,alt,ak);
+  if(l===0){dn9DagCiz(tm,vw,vh,tab[1]+30,alt,ak);dn9Simgeler(tm,vw,1,tab[1]-30,alt,ak);}
   if(l===1)dn9Adalar(tm,vw,vh,gokAlt+200,ak,1);
+  if(l===2)dn9Simgeler(tm,vw,0,tab[2]-38,ort[2],ak);
  }
  // ufukta günün ışıması: sabah altın, şelalede nane, adalarda şeftali, gün batımında turuncu-pembe; ışık arttıkça ısınır
  g.globalCompositeOperation='lighter';
  const R9=DN9.renk,hc=dn9AraR(['#fff0c0','#c8fff0','#ffd0c0','#ff9a70','#ff8aa0'],gun);
- dn9Glow(hc,A.sx,tab[1]-40,vw*.7,120,.1+R9*.08+ak*.08);dn9Glow('#ffd8a0',vw*.5,tab[2]-30,vw*.8,90,(.03+R9*.06+fin*.08));
+ dn9Glow(hc,A.sx,tab[1]-40,vw*.7,120,.1+R9*.08+ak*.08);{const sk=clamp(1-Math.abs(gun-2.2)*1.1,0,1);if(sk>.02)dn9Glow('#ffc86a',A.sx,A.sy+vh*.12,vw*.75,vh*.5,sk*.16);}dn9Glow('#ffd8a0',vw*.5,tab[2]-30,vw*.8,90,(.03+R9*.06+fin*.08));
  g.globalCompositeOperation='source-over';
  // solgunluk: Kalp sönükken uzak vadi biraz griye çalar (ışık geldikçe açılır)
  const sg=(1-R9)*.2*(1-fin);if(sg>.004){g.globalAlpha=sg;g.drawImage(F.solgun,0,0,8,128,0,Math.min(gokAlt,vh)-vh*.3,vw,vh*.3+Math.max(0,yZ-gokAlt)+2);g.globalAlpha=1;}
@@ -1296,7 +1393,7 @@ function dn9Isit(){
  if(p<12){dn9Yukle(dn9Serit(p-6,0));DN9.prep++;return false;}
  if(p<17){dn9Yukle(dn9Serit(p-12,1));DN9.prep++;return false;}
  if(p===17){dn9Yukle(dn9DagArt(0));dn9Yukle(dn9DagArt(1));DN9.prep++;return false;}
- if(p===18){dn9Yukle(dn9EjderArt(0));dn9Yukle(dn9EjderArt(1));for(let v=0;v<3;v++){dn9Yukle(dn9AdaArt(v,0));dn9Yukle(dn9AdaArt(v,1));}DN9.prep++;return false;}
+ if(p===18){dn9Yukle(dn9EjderArt(0));dn9Yukle(dn9EjderArt(1));for(let v=0;v<3;v++){dn9Yukle(dn9AdaArt(v,0));dn9Yukle(dn9AdaArt(v,1));}for(let v=0;v<7;v++)dn9Yukle(dn9SimgeArt(v,0,v?0:1));DN9.prep++;return false;}
  if(p===19){dn9Yukle(dn9OnArt());dn9Yukle(dn9DalArt());dn9Yapilar();DN9.prep++;return false;}
  if(p<23){const i=Math.max(0,Math.floor(((typeof cam!=='undefined'?cam.x:0))/DN9_CW))+(p-20);dn9Yukle(dn9Chunk(i));DN9.prep++;return false;}
  for(const c of ['#fff2c0','#e8fff0','#ffd8c4','#ff9a74','#ff8a70','#fffbe8','#f4fff8','#fff0dc','#ffd49a','#ffb27e','#c8a8ff','#ffd27a','#9ff0c8','#ffd8a0','#fff0c0',
