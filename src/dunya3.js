@@ -89,19 +89,21 @@ function dn3Update(tm) {
 // ═══════════ gökyüzü: iki önbellekli tuval (şafak / sabah), ilerlemeye göre karışım ═══════════
 const DN3_SKYC = {
   at: [0, 0.26, 0.5, 0.7, 0.87, 1],
-  A: ['#6a6ec4', '#9784d2', '#d596cb', '#ffa6ae', '#ffc199', '#ffdcac'],
-  B: ['#7f9fe4', '#a9ace6', '#e2b2da', '#ffb8b4', '#ffc898', '#ffdca8'],
-  seaA: ['#ffd9b8', '#f7bccb', '#dcaad8', '#b79cd8'],
-  seaB: ['#ffdcc0', '#fbc4c8', '#e6b2dc', '#c4abe2'],
+  A: ['#4c68d2', '#7c86e4', '#c486dc', '#ff86b2', '#ffa48c', '#ffd49a'],   // sabah pembesi
+  M: ['#2f86e2', '#56a8f2', '#96ccf6', '#ffe6a6', '#ffcc6e', '#ffe9a6'],   // altın gün (temiz mavi + altın ufuk)
+  B: ['#35308e', '#6e40b0', '#c44e9c', '#ff6e62', '#ff9a42', '#ffd070'],   // gün batımı
+  seaA: ['#ffc8a8', '#f59cc0', '#c88ad4', '#9a7cd0'],
+  seaM: ['#ffe2a8', '#ffbe96', '#eaa0c0', '#b490d8'],
+  seaB: ['#ffb866', '#f07a8a', '#b45cb0', '#7650b4'],
 };
-const DN3_SK = { A: null, B: null, C: null, w: 0, h: 0, yh: 0, k: 0.5, cp: -1, bOk: false };
+const DN3_SK = { A: null, B: null, M: null, mOk: false, C: null, w: 0, h: 0, yh: 0, k: 0.5, cp: -1, bOk: false };
 let dn3NoiseP = null;
 function dn3Dither(x, w, h, amt) {
   if (!dn3NoiseP) { const c = dn3Cv(96, 96), t = c.getContext('2d'), im = t.createImageData(96, 96), R = rng(77); for (let i = 0; i < 96 * 96; i++) { const v = R() < 0.5 ? 0 : 255; im.data[i * 4] = im.data[i * 4 + 1] = im.data[i * 4 + 2] = v; im.data[i * 4 + 3] = Math.round(R() * 255); } t.putImageData(im, 0, 0); dn3NoiseP = x.createPattern(c, 'repeat'); }
   x.save(); x.globalAlpha = amt; x.fillStyle = dn3NoiseP; x.fillRect(0, 0, w, h); x.restore();
 }
 function dn3PaintSky(c, kk, w, h, yh) {
-  const x = c.getContext('2d'), R = rng(303 + kk * 11), K = DN3_SKYC, col = i => dn3Mix(K.A[i], K.B[i], kk), sea = i => dn3Mix(K.seaA[i], K.seaB[i], kk);
+  const x = c.getContext('2d'), R = rng(303 + kk * 11), K = DN3_SKYC, col = i => kk <= 0.5 ? dn3Mix(K.A[i], K.M[i], kk * 2) : dn3Mix(K.M[i], K.B[i], kk * 2 - 1), sea = i => kk <= 0.5 ? dn3Mix(K.seaA[i], K.seaM[i], kk * 2) : dn3Mix(K.seaM[i], K.seaB[i], kk * 2 - 1);
   x.setTransform(1, 0, 0, 1, 0, 0); x.globalCompositeOperation = 'source-over'; x.globalAlpha = 1;
   const gr = x.createLinearGradient(0, 0, 0, yh); for (let i = 0; i < 6; i++) gr.addColorStop(K.at[i], col(i));
   x.fillStyle = gr; x.fillRect(0, 0, w, yh + 1);
@@ -110,14 +112,14 @@ function dn3PaintSky(c, kk, w, h, yh) {
   const sx = w * 0.72;
   // ufukta gün doğumu parıltısı (güneş tarafı sıcak, karşı taraf pembe-lila)
   const ell = (cx, cy, rx, ry, stops) => { x.save(); x.translate(cx, cy); x.scale(1, ry / rx); const rg = x.createRadialGradient(0, 0, 0, 0, 0, rx); for (const s of stops) rg.addColorStop(s[0], s[1]); x.fillStyle = rg; x.fillRect(-rx, -rx, rx * 2, rx * 2); x.restore(); };
-  ell(sx, yh, w * 0.75, yh * 0.62, [[0, dn3Hx('#fff4d6', 0.75 - 0.15 * kk)], [0.25, dn3Hx('#ffd6a4', 0.42)], [0.6, dn3Hx('#ffb0a8', 0.16)], [1, 'rgba(255,176,168,0)']]);
-  ell(w * 0.2, yh, w * 0.6, yh * 0.35, [[0, dn3Hx('#ffb4c8', 0.32)], [1, 'rgba(255,180,200,0)']]);
+  ell(sx, yh, w * 0.55, yh * 0.45, [[0, dn3Hx(kk > 0.75 ? '#ffe0a0' : '#fff0c8', 0.6)], [0.25, dn3Hx(kk > 0.75 ? '#ffb060' : '#ffd090', 0.34)], [0.6, dn3Hx('#ffa090', 0.1)], [1, 'rgba(255,160,144,0)']]);
+  ell(w * 0.2, yh, w * 0.6, yh * 0.35, [[0, dn3Hx('#ff9cc0', 0.22)], [1, 'rgba(255,180,200,0)']]);
   // tepede şafak öncesinden kalan birkaç soluk yıldız (yalnız şafakta)
-  if (kk < 0.5) for (let i = 0; i < 26; i++) { const px = R() * w, py = Math.pow(R(), 1.6) * yh * 0.26, s = (0.6 + R() * 1.2) * (w / 1000 + 0.4); x.fillStyle = dn3Hx('#ffffff', 0.15 + R() * 0.3); x.fillRect(px, py, s, s); }
+  if (kk > 0.9) for (let i = 0; i < 26; i++) { const px = R() * w, py = Math.pow(R(), 1.6) * yh * 0.26, s = (0.6 + R() * 1.2) * (w / 1000 + 0.4); x.fillStyle = dn3Hx('#ffffff', 0.15 + R() * 0.3); x.fillRect(px, py, s, s); }
   // ince yüksek bulut çizgileri (cirrus): altları güneşle altın, üstte lila
   for (let i = 0; i < 46; i++) {
     const py = (0.1 + Math.pow(R(), 0.8) * 0.78) * yh, px = R() * w, ww = w * (0.06 + R() * 0.22), hh = (2 + R() * 6) * (w / 1000 + 0.3), low = py / yh;
-    const c0 = low > 0.6 ? '#fff0c8' : low > 0.35 ? '#ffd0d8' : '#e8c8f0', a = (0.06 + R() * 0.12) * (0.6 + low * 0.6);
+    const c0 = low > 0.6 ? (kk > 0.75 ? '#ffc890' : '#fff0c8') : low > 0.35 ? '#ffc8d8' : (kk > 0.25 && kk < 0.75 ? '#ffffff' : '#f0c0e8'), a = (0.08 + R() * 0.14) * (0.6 + low * 0.6);
     x.save(); x.translate(px, py); x.rotate((R() - 0.5) * 0.08); x.scale(1, hh / ww);
     const rg = x.createRadialGradient(0, 0, 0, 0, 0, ww); rg.addColorStop(0, dn3Hx(c0, a)); rg.addColorStop(0.6, dn3Hx(c0, a * 0.4)); rg.addColorStop(1, dn3Hx(c0, 0));
     x.fillStyle = rg; x.fillRect(-ww, -ww, ww * 2, ww * 2); x.restore();
@@ -128,14 +130,14 @@ function dn3SkyBuild() {
   const k = 0.5, w = Math.max(64, Math.round(W * k)), h = Math.round(1.3 * H * k);
   if (DN3_SK.w === w && DN3_SK.h === h && DN3_SK.A) return;
   const S_ = DN3_SK; S_.w = w; S_.h = h; S_.k = w / W; S_.yh = Math.round(0.82 * H * S_.k);
-  S_.A = dn3Cv(w, h); S_.B = dn3Cv(w, h); S_.C = dn3Cv(w, h); S_.cp = -1; S_.bOk = false;
+  S_.A = dn3Cv(w, h); S_.B = dn3Cv(w, h); S_.M = dn3Cv(w, h); S_.C = dn3Cv(w, h); S_.cp = -1; S_.bOk = false; S_.mOk = false;
   dn3PaintSky(S_.A, 0, w, h, S_.yh);
 }
-function dn3SkyStep() { const S_ = DN3_SK; if (S_.A && !S_.bOk) { dn3PaintSky(S_.B, 1, S_.w, S_.h, S_.yh); S_.bOk = true; S_.cp = -1; } }
+function dn3SkyStep() { const S_ = DN3_SK; if (!S_.A) return; if (!S_.mOk) { dn3PaintSky(S_.M, 0.5, S_.w, S_.h, S_.yh); S_.mOk = true; S_.cp = -1; } else if (!S_.bOk) { dn3PaintSky(S_.B, 1, S_.w, S_.h, S_.yh); S_.bOk = true; S_.cp = -1; } }
 function dn3SkyComp(p) {
   const S_ = DN3_SK, q = Math.round(p * 160) / 160; if (S_.cp === q) return S_.C; S_.cp = q;
-  const x = S_.C.getContext('2d'); x.globalCompositeOperation = 'copy'; x.globalAlpha = 1; x.drawImage(S_.A, 0, 0);
-  x.globalCompositeOperation = 'source-over'; if (S_.bOk && q > 0) { x.globalAlpha = q; x.drawImage(S_.B, 0, 0); } x.globalAlpha = 1;
+  const x = S_.C.getContext('2d'), ikinci = q > 0.5 && S_.mOk && S_.bOk; x.globalCompositeOperation = 'copy'; x.globalAlpha = 1; x.drawImage(ikinci ? S_.M : S_.A, 0, 0);
+  x.globalCompositeOperation = 'source-over'; if (ikinci) { x.globalAlpha = q * 2 - 1; x.drawImage(S_.B, 0, 0); } else if (S_.mOk && q > 0) { x.globalAlpha = Math.min(1, q * 2); x.drawImage(S_.M, 0, 0); } x.globalAlpha = 1;
   return S_.C;
 }
 
@@ -160,14 +162,14 @@ function dn3RaySpr(i) {
 }
 function dn3SunPos() {
   const p = smooth(clamp(DN3.p, 0, 1)), m = Math.min(W, H);
-  DN3.sx = W * 0.72 - clamp(cam.x * 0.002, 0, 60) * S; DN3.sr = m * (0.058 - 0.008 * p);
-  DN3.sy = DN3.hy - (0.012 + 0.2 * p) * H + DN3.sr * 0.15;
+  DN3.sx = W * 0.72 - clamp(cam.x * 0.002, 0, 60) * S; DN3.sr = m * (0.058 - 0.008 * Math.sin(Math.PI * p) + 0.012 * p * p);
+  DN3.sy = DN3.hy - (0.03 + 0.2 * Math.sin(Math.PI * Math.min(1, p * 1.04))) * H + DN3.sr * 0.15;
 }
 function dn3Sun(tm) {
   const x = DN3.sx, y = DN3.sy, r = DN3.sr, br = 0.92 + 0.08 * Math.sin(tm * 0.45), m = Math.max(W, H);
   const flyGlow = 1 + 0.35 * DN3.fly;
   g.globalCompositeOperation = 'lighter';
-  dn3Eg('#ffc89a', x, y, m * 0.75 * flyGlow, m * 0.42 * flyGlow, (0.22 + 0.08 * DN3.fly) * br);
+  dn3Eg('#ffc89a', x, y, m * 0.75 * flyGlow, m * 0.42 * flyGlow, (0.12 + 0.08 * DN3.fly) * br);
   dn3Eg('#ffe2b0', x, y, r * 7 * flyGlow, r * 6 * flyGlow, (0.4 + 0.12 * DN3.fly) * br);
   dn3Eg('#fff2d0', x, y, r * 3 * flyGlow, r * 3 * flyGlow, 0.5 * br);
   g.globalCompositeOperation = 'source-over';
@@ -261,11 +263,11 @@ const dn3Prof = (u, s) => 0.5 + 0.2 * Math.sin(6.2832 * u * 2 + s) + 0.15 * Math
 
 // ═══════════ paralaks katmanları: uzak bulut kuleleri, bulut denizi sıraları ═══════════
 const DN3_LAY = [
-  { kind: 'tower', bl: 0.38, f: 0.018, dr: 1.2, P: 3200, up: 330, dn: 60, yo: 6, lo: 0.12, rMin: 26, rMax: 52, hi: '#f6eaff', body: '#c4b4ea', edge: '#ab9ede', bot: '#c8b8ea', rim: '#ffe4cc', rimA: 0.35, seed: 11, hz: '#ffe2d0' },
-  { kind: 'bank', bl: 0.42, f: 0.05, dr: 2.5, P: 2900, up: 120, dn: 70, yo: 14, lo: 0.25, rMin: 29, rMax: 61, hi: '#ffeef6', body: '#c4a2dc', edge: '#a88cd0', bot: '#c0a4dc', rim: '#ffd4b4', rimA: 0.45, seed: 23, hz: '#ffd8dc' },
-  { kind: 'bank', bl: 0.5, f: 0.11, dr: 4, P: 2600, up: 120, dn: 90, yo: 44, lo: 0.25, rMin: 32, rMax: 67, hi: '#fff0ec', body: '#de9cc6', edge: '#b888c6', bot: '#d4a0cc', rim: '#ffd6a0', rimA: 0.55, seed: 37, hz: '#ffd6d8' },
-  { kind: 'bank', bl: 0.55, f: 0.22, dr: 6, P: 2400, up: 130, dn: 120, yo: 96, lo: 0.3, rMin: 35, rMax: 72, hi: '#fff4e8', body: '#f0a8be', edge: '#cc8cbc', bot: '#e0a4c6', rim: '#ffe09c', rimA: 0.6, seed: 41, hz: '#ffdcd8' },
-  { kind: 'bank', bl: 0.6, f: 0.4, dr: 9, P: 2200, up: 140, dn: 170, yo: 168, lo: 0.3, rMin: 38, rMax: 81, hi: '#fff8ee', body: '#f9bcc2', edge: '#d898c0', bot: '#e6b0ca', rim: '#fff0b0', rimA: 0.65, seed: 53, hz: '#f4c8dc' },
+  { kind: 'tower', bl: 0.38, f: 0.018, dr: 1.2, P: 3200, up: 330, dn: 60, yo: 6, lo: 0.12, rMin: 26, rMax: 52, hi: '#f4ecff', body: '#a698e8', edge: '#8478d8', bot: '#a494e2', rim: '#ffe4cc', rimA: 0.4, seed: 11, hz: '#e4c4ec' },
+  { kind: 'bank', bl: 0.42, f: 0.05, dr: 2.5, P: 2900, up: 120, dn: 70, yo: 14, lo: 0.25, rMin: 29, rMax: 61, hi: '#ffeaf6', body: '#b084dc', edge: '#8c68ca', bot: '#a880d6', rim: '#ffd4b4', rimA: 0.5, seed: 23, hz: '#e8b4dc' },
+  { kind: 'bank', bl: 0.5, f: 0.11, dr: 4, P: 2600, up: 120, dn: 90, yo: 44, lo: 0.25, rMin: 32, rMax: 67, hi: '#ffece8', body: '#dc78bc', edge: '#ae5cb6', bot: '#c878c2', rim: '#ffd6a0', rimA: 0.6, seed: 37, hz: '#f0a8cc' },
+  { kind: 'bank', bl: 0.55, f: 0.22, dr: 6, P: 2400, up: 130, dn: 120, yo: 96, lo: 0.3, rMin: 35, rMax: 72, hi: '#fff2e2', body: '#f6869e', edge: '#cc60a4', bot: '#de80b4', rim: '#ffe09c', rimA: 0.65, seed: 41, hz: '#f8a8c0' },
+  { kind: 'bank', bl: 0.6, f: 0.4, dr: 9, P: 2200, up: 140, dn: 170, yo: 168, lo: 0.3, rMin: 38, rMax: 81, hi: '#fff8ee', body: '#ffa49c', edge: '#e070a4', bot: '#e88cb8', rim: '#fff0b0', rimA: 0.7, seed: 53, hz: '#f6a4c4' },
 ];
 const dn3LayQ = L => clamp(H / VH * 0.55, 0.45, Math.min(1.3, 4200 / L.P));
 function dn3PaintLayer(L) {
@@ -297,14 +299,14 @@ function dn3PaintLayer(L) {
     const gb = x.createLinearGradient(0, topY, 0, C.base + 10); gb.addColorStop(0, top0); gb.addColorStop(0.55, L.body); gb.addColorStop(1, base0); x.fillStyle = gb; x.fill(uni);
     x.save(); x.clip(uni);
     const lx0 = cx + C.cw * 0.2, ly0 = topY + (C.base - topY) * 0.15, lr = C.cw * 0.72, lg = x.createRadialGradient(lx0, ly0, 0, lx0, ly0, lr);
-    lg.addColorStop(0, dn3Hx(L.hi, 0.7)); lg.addColorStop(0.45, dn3Hx(L.hi, 0.25)); lg.addColorStop(1, dn3Hx(L.hi, 0)); x.fillStyle = lg; x.fillRect(lx0 - lr, ly0 - lr, lr * 2, lr * 2);
+    lg.addColorStop(0, dn3Hx(L.hi, 0.85)); lg.addColorStop(0.4, dn3Hx(L.hi, 0.3)); lg.addColorStop(1, dn3Hx(L.hi, 0)); x.fillStyle = lg; x.fillRect(lx0 - lr, ly0 - lr, lr * 2, lr * 2);
     const sx0 = cx - C.cw * 0.42, sy0 = C.base, sr = C.cw * 0.62, sg = x.createRadialGradient(sx0, sy0, 0, sx0, sy0, sr);
     sg.addColorStop(0, dn3Hx(L.edge, 0.55)); sg.addColorStop(1, dn3Hx(L.edge, 0)); x.fillStyle = sg; x.fillRect(sx0 - sr, sy0 - sr, sr * 2, sr * 2);
-    x.strokeStyle = L.edge; for (const lb of lobes) { if (lb[1] + lb[2] > C.base - C.chh * 0.1) continue; x.globalAlpha = 0.1; x.lineWidth = lb[2] * 0.08; x.beginPath(); x.arc(lb[0] - lb[2] * 0.04, lb[1] + lb[2] * 0.02, lb[2] * 0.96, 0.35, 2.75); x.stroke(); }
+    x.strokeStyle = L.edge; for (const lb of lobes) { if (lb[1] + lb[2] > C.base - C.chh * 0.1) continue; x.globalAlpha = 0.2; x.lineWidth = lb[2] * 0.08; x.beginPath(); x.arc(lb[0] - lb[2] * 0.04, lb[1] + lb[2] * 0.02, lb[2] * 0.96, 0.35, 2.75); x.stroke(); }
     x.globalAlpha = 1; x.restore();
   }
   // alt kısım: sis rengine karışan yumuşak geçiş (sis bandı katmana pişirilir; karede ayrıca çizilmez)
-  const gf = x.createLinearGradient(0, foot - L.up * 0.1, 0, bottom); gf.addColorStop(0, dn3Hx(L.hz || L.bot, 0)); gf.addColorStop(0.45, dn3Hx(L.hz || L.bot, 0.55)); gf.addColorStop(1, dn3Hx(L.bot, 0.95));
+  const gf = x.createLinearGradient(0, foot - L.up * 0.1, 0, bottom); gf.addColorStop(0, dn3Hx(L.hz || L.bot, 0)); gf.addColorStop(0.5, dn3Hx(L.hz || L.bot, 0.3)); gf.addColorStop(1, dn3Hx(L.bot, 0.95));
   x.fillStyle = gf; x.fillRect(-10, foot - L.up * 0.1, Pp + 20, bottom - foot + L.up * 0.1 + 6);
 }
 function dn3LayFoot(L) { return DN3.hy + L.yo * S + DN3.dyS * L.f * 0.9; }
@@ -437,37 +439,37 @@ function dn3CanyonBake() {
   const P = 2400, Ht = 300, Hb = 320;
   const cTop = dn3Cv(P, Ht), xt = cTop.getContext('2d');
   const cBot = dn3Cv(P, Hb), xb = cBot.getContext('2d');
-  const Rt = rng(101), Rb = rng(202);
+  const Rt = rng(101), Rb = rng(202), NK = 69, RT = [], RB = []; for (let i = 0; i < NK * 2; i++) { RT.push(Rt()); RB.push(Rb()); }
   const gap = u => smooth(clamp((Math.abs(u - 0.51) - 0.065) / 0.09, 0, 1));
   xt.lineCap = 'round'; xt.lineJoin = 'round';
-  for (let px = 0; px < P; px += 35) {
-    const u = px / P, gp = gap(u);
+  for (let i = -3; i < NK + 3; i++) {
+    const px = i * P / NK, k = ((i % NK) + NK) % NK, u = k / NK, gp = gap(u);
     if (gp <= 0.02) continue;
-    const depth = (140 + Rt() * 110) * gp, r = (32 + Rt() * 45) * gp;
+    const depth = (140 + RT[k * 2] * 110) * gp, r = (32 + RT[k * 2 + 1] * 45) * gp;
     for (let t = 0; t < 3; t++) {
       const ly = depth * (0.25 + t * 0.32), lr = r * (1 - t * 0.18);
       xt.save(); xt.translate(2, -2); xt.globalAlpha = 0.5; xt.fillStyle = '#ffda78';
       xt.beginPath(); xt.arc(px, ly, lr + 2.5, 0, 6.283); xt.fill(); xt.restore();
       const gr = xt.createRadialGradient(px + lr * 0.25, ly - lr * 0.3, 0, px, ly, lr);
-      gr.addColorStop(0, '#fff4d4'); gr.addColorStop(0.5, '#ea9eb5'); gr.addColorStop(1, '#7a5a92');
+      gr.addColorStop(0, '#fffaf0'); gr.addColorStop(0.55, '#f8c0d8'); gr.addColorStop(1, '#b490e0');
       xt.fillStyle = gr; xt.beginPath(); xt.arc(px, ly, lr, 0, 6.283); xt.fill();
     }
-    xt.fillStyle = '#7a5a92'; xt.fillRect(px - 20, 0, 42, depth * 0.4);
+    xt.fillStyle = '#b490e0'; xt.fillRect(px - 20, 0, 42, Math.max(0, depth * 0.25 - r * 0.6));
   }
   xb.lineCap = 'round'; xb.lineJoin = 'round';
-  for (let px = 0; px < P; px += 35) {
-    const u = px / P, gp = gap(u);
+  for (let i = -3; i < NK + 3; i++) {
+    const px = i * P / NK, k = ((i % NK) + NK) % NK, u = k / NK, gp = gap(u);
     if (gp <= 0.02) continue;
-    const height = (160 + Rb() * 120) * gp, r = (35 + Rb() * 48) * gp, baseY = Hb;
+    const height = (160 + RB[k * 2] * 120) * gp, r = (35 + RB[k * 2 + 1] * 48) * gp, baseY = Hb;
     for (let t = 0; t < 3; t++) {
       const ly = baseY - height * (0.25 + t * 0.32), lr = r * (1 - t * 0.16);
       xb.save(); xb.translate(2, -2); xb.globalAlpha = 0.55; xb.fillStyle = '#ffd670';
       xb.beginPath(); xb.arc(px, ly, lr + 2.5, 0, 6.283); xb.fill(); xb.restore();
       const gr = xb.createRadialGradient(px + lr * 0.25, ly - lr * 0.3, 0, px, ly, lr);
-      gr.addColorStop(0, '#fff6db'); gr.addColorStop(0.52, '#f0a4bd'); gr.addColorStop(1, '#825e98');
+      gr.addColorStop(0, '#fffaf0'); gr.addColorStop(0.55, '#f8c0d8'); gr.addColorStop(1, '#b490e0');
       xb.fillStyle = gr; xb.beginPath(); xb.arc(px, ly, lr, 0, 6.283); xb.fill();
     }
-    xb.fillStyle = '#825e98'; xb.fillRect(px - 20, baseY - height * 0.4, 42, height * 0.5 + 4);
+    xb.fillStyle = '#b490e0'; xb.fillRect(px - 20, baseY - Math.max(0, height * 0.25 - r * 0.6), 42, height * 0.25 + 4);
   }
   return dn3CanyonC = { top: cTop, bot: cBot, P, Ht, Hb };
 }
@@ -488,6 +490,107 @@ function dn3DrawCanyon(tm) {
 }
 
 // ═══════════ dn3Background ═══════════
+// ═══════════ yol boyu manzara: bulut evleri/kuleleri, şato, gökkuşağı köprüleri, sıcak hava balonları, uçurtmalar (hepsi bir kez boyanan sprite) ═══════════
+const DN3_MZB = [['#ff6f8f', '#fff3e0'], ['#ffb23e', '#fff7d8'], ['#4cb4f0', '#ffffff'], ['#9b7cf0', '#ffe9a8'], ['#4fc898', '#fff8e0']];   // balon / uçurtma / çatı renk çiftleri
+const DN3_MZG = { ev: [170, 150], kule: [130, 260], sato: [460, 320], kopru: [380, 170], balon: [124, 184], ucurtma: [90, 180] };
+const dn3MzC = {};
+function dn3MzPuffs(x, x0, x1, y, r, sd) { const R = rng(sd); for (let px = x0; px <= x1; px += r * (0.7 + R() * 0.5)) { const rr = r * (0.75 + R() * 0.5); dn3Puff(x, px, y - rr * 0.3 + R() * 4, rr, '#ffffff', '#ffeef4', '#eeb8dc', 1); } }
+function dn3MzRoof(x, cx, y, w, h, col) { x.fillStyle = col; x.beginPath(); x.moveTo(cx - w / 2 - 4, y); x.quadraticCurveTo(cx - w * 0.18, y - h * 0.5, cx, y - h); x.quadraticCurveTo(cx + w * 0.18, y - h * 0.5, cx + w / 2 + 4, y); x.closePath(); x.fill(); x.fillStyle = 'rgba(255,255,255,0.3)'; x.beginPath(); x.moveTo(cx + w * 0.08, y - 2); x.quadraticCurveTo(cx + w * 0.16, y - h * 0.5, cx + 2, y - h + 4); x.quadraticCurveTo(cx + w * 0.3, y - h * 0.4, cx + w / 2, y - 2); x.closePath(); x.fill(); }
+function dn3MzBody(x, x0, y0, w, h, c0, c1) { const gr = x.createLinearGradient(x0, 0, x0 + w, 0); gr.addColorStop(0, c1); gr.addColorStop(0.55, c0); gr.addColorStop(1, c0); x.fillStyle = gr; x.beginPath(); x.rect(x0, y0, w, h); x.fill(); }
+function dn3MzWin(x, cx, cy, w, h) { x.fillStyle = '#b06aa8'; x.beginPath(); x.ellipse(cx, cy, w / 2 + 2, h / 2 + 2, 0, 0, 6.283); x.fill(); x.fillStyle = '#ffd95e'; x.beginPath(); x.ellipse(cx, cy, w / 2, h / 2, 0, 0, 6.283); x.fill(); x.fillStyle = 'rgba(255,255,255,0.6)'; x.beginPath(); x.ellipse(cx + w * 0.12, cy - h * 0.15, w * 0.18, h * 0.2, 0, 0, 6.283); x.fill(); }
+function dn3MzFlag(x, cx, y, col) { x.strokeStyle = '#a06aa8'; x.lineWidth = 2; x.beginPath(); x.moveTo(cx, y); x.lineTo(cx, y - 20); x.stroke(); x.fillStyle = col; x.beginPath(); x.moveTo(cx, y - 20); x.lineTo(cx + 15, y - 15); x.lineTo(cx, y - 9); x.closePath(); x.fill(); }
+function dn3MzPaint(x, k, v) {
+  const P2 = DN3_MZB[v % DN3_MZB.length], c0 = P2[0], c1 = P2[1];
+  x.lineCap = 'round'; x.lineJoin = 'round';
+  if (k === 'ev') {   // bulutun üstünde minik ev
+    dn3MzPuffs(x, 22, 150, 128, 22, 5 + v);
+    dn3MzBody(x, 50, 70, 70, 52, '#fff6ea', '#f0cfe0');
+    dn3MzRoof(x, 85, 72, 84, 46, c0);
+    x.fillStyle = '#c07a9c'; x.beginPath(); x.moveTo(60, 122); x.lineTo(60, 102); x.arc(69, 102, 9, Math.PI, 0); x.lineTo(78, 122); x.closePath(); x.fill();
+    dn3MzWin(x, 100, 96, 17, 17);
+    x.fillStyle = '#f0cfe0'; x.fillRect(104, 34, 9, 20); dn3Puff(x, 112, 24, 7, '#ffffff', '#fff2f6', '#f4d0e4', 0.95); dn3Puff(x, 121, 12, 5, '#ffffff', '#fff2f6', '#f4d0e4', 0.9);
+    dn3MzPuffs(x, 30, 142, 138, 16, 9 + v);
+  } else if (k === 'kule') {   // sivri çatılı bulut kulesi
+    dn3MzPuffs(x, 20, 112, 236, 22, 15 + v);
+    x.fillStyle = '#f2d2e4'; x.beginPath(); x.moveTo(40, 232); x.lineTo(46, 96); x.lineTo(86, 96); x.lineTo(92, 232); x.closePath(); x.fill();
+    x.fillStyle = '#fff6ec'; x.beginPath(); x.moveTo(58, 232); x.lineTo(60, 96); x.lineTo(86, 96); x.lineTo(92, 232); x.closePath(); x.fill();
+    x.fillStyle = '#fff6ec'; x.fillRect(38, 86, 56, 14); x.fillStyle = '#f2d2e4'; x.fillRect(38, 86, 20, 14);
+    dn3MzRoof(x, 66, 88, 60, 62, c0); dn3MzFlag(x, 66, 28, c1 === '#ffffff' ? '#ffd95e' : '#ff8fb0');
+    dn3MzWin(x, 68, 124, 15, 20); dn3MzWin(x, 68, 164, 15, 20); dn3MzWin(x, 68, 204, 15, 20);
+    dn3MzPuffs(x, 26, 106, 248, 16, 19 + v);
+  } else if (k === 'sato') {   // bulut şatosu
+    dn3MzPuffs(x, 30, 430, 288, 34, 31 + v);
+    const kul = [[70, 150, 54], [150, 110, 60], [230, 70, 76], [310, 110, 60], [390, 150, 54]];
+    dn3MzBody(x, 70, 190, 320, 100, '#f8e2f2', '#d4aee4');
+    for (let i = 0; i < 16; i++) { x.fillStyle = i % 2 ? '#f8e2f2' : '#e6c6ea'; x.fillRect(70 + i * 20, 178, 12, 14); }
+    for (const t of kul) { dn3MzBody(x, t[0] - t[2] / 2, t[1], t[2], 290 - t[1], '#fdeef6', '#d2aae2'); x.fillStyle = '#e8c8ec'; x.fillRect(t[0] - t[2] / 2 - 4, t[1] - 6, t[2] + 8, 10); }
+    dn3MzRoof(x, 70, 146, 62, 60, '#ff8fb0'); dn3MzRoof(x, 150, 106, 68, 66, '#8f86ea'); dn3MzRoof(x, 230, 66, 86, 60, '#ff8fb0'); dn3MzRoof(x, 310, 106, 68, 66, '#8f86ea'); dn3MzRoof(x, 390, 146, 62, 60, '#ff8fb0');
+    dn3MzFlag(x, 230, 8, '#ffd95e'); dn3MzFlag(x, 150, 42, '#ff8fb0'); dn3MzFlag(x, 310, 42, '#ff8fb0');
+    for (const t of kul) { dn3MzWin(x, t[0], t[1] + 34, 16, 22); if (t[1] < 140) dn3MzWin(x, t[0], t[1] + 76, 16, 22); }
+    x.fillStyle = '#b06aa8'; x.beginPath(); x.moveTo(208, 290); x.lineTo(208, 246); x.arc(230, 246, 22, Math.PI, 0); x.lineTo(252, 290); x.closePath(); x.fill();
+    x.fillStyle = '#ffd95e'; x.beginPath(); x.moveTo(214, 290); x.lineTo(214, 248); x.arc(230, 248, 16, Math.PI, 0); x.lineTo(246, 290); x.closePath(); x.fill();
+    dn3MzPuffs(x, 40, 420, 304, 24, 37 + v);
+  } else if (k === 'kopru') {   // iki bulut arasında gökkuşağı köprüsü
+    x.save(); x.translate(190, 150); x.scale(1, 0.78);
+    for (let i = 0; i < 7; i++) { x.strokeStyle = DN3_RB[i]; x.lineWidth = 9.5; x.beginPath(); x.arc(0, 0, 150 - i * 9, Math.PI, 6.2832); x.stroke(); }
+    x.restore();
+    dn3MzPuffs(x, 8, 96, 152, 24, 41 + v); dn3MzPuffs(x, 284, 372, 152, 24, 43 + v);
+  } else if (k === 'balon') {   // sıcak hava balonu
+    const cx = 62, cy = 62, r = 54, env = new Path2D(); env.moveTo(cx - 13, 132); env.bezierCurveTo(cx - 26, 112, cx - r, 96, cx - r, cy); env.arc(cx, cy, r, Math.PI, 0); env.bezierCurveTo(cx + r, 96, cx + 26, 112, cx + 13, 132); env.closePath();
+    x.strokeStyle = '#a8768c'; x.lineWidth = 1.6; x.beginPath(); x.moveTo(cx - 12, 132); x.lineTo(cx - 9, 156); x.moveTo(cx + 12, 132); x.lineTo(cx + 9, 156); x.stroke();
+    x.save(); x.clip(env); x.fillStyle = c0; x.fillRect(0, 0, 124, 140);
+    x.fillStyle = c1; x.beginPath(); x.ellipse(cx, cy + 10, r * 0.74, r * 1.5, 0, 0, 6.283); x.fill();
+    x.fillStyle = c0; x.beginPath(); x.ellipse(cx, cy + 10, r * 0.46, r * 1.5, 0, 0, 6.283); x.fill();
+    x.fillStyle = c1; x.beginPath(); x.ellipse(cx, cy + 10, r * 0.17, r * 1.5, 0, 0, 6.283); x.fill();
+    const lg = x.createRadialGradient(cx + 20, cy - 26, 0, cx + 10, cy - 10, r * 1.2); lg.addColorStop(0, 'rgba(255,255,255,0.55)'); lg.addColorStop(0.5, 'rgba(255,255,255,0.08)'); lg.addColorStop(1, 'rgba(110,60,130,0.28)'); x.fillStyle = lg; x.fillRect(0, 0, 124, 140);
+    x.restore();
+    x.fillStyle = '#8a5a9a'; x.fillRect(cx - 14, 129, 28, 5);
+    x.fillStyle = '#c98a5c'; x.beginPath(); x.moveTo(cx - 12, 154); x.lineTo(cx + 12, 154); x.lineTo(cx + 10, 172); x.quadraticCurveTo(cx, 176, cx - 10, 172); x.closePath(); x.fill();
+    x.fillStyle = '#e8b07a'; x.fillRect(cx - 13, 153, 26, 5);
+  } else {   // uçurtma
+    const cx = 45, q = [[cx, 6], [cx + 34, 50], [cx, 108], [cx - 34, 50]], m = [cx, 50];
+    for (let i = 0; i < 4; i++) { const a = q[i], b = q[(i + 1) % 4]; x.fillStyle = i % 2 ? c1 : c0; x.beginPath(); x.moveTo(m[0], m[1]); x.lineTo(a[0], a[1]); x.lineTo(b[0], b[1]); x.closePath(); x.fill(); }
+    x.strokeStyle = '#9a6aa8'; x.lineWidth = 2; x.beginPath(); x.moveTo(q[0][0], q[0][1]); for (let i = 1; i < 4; i++) x.lineTo(q[i][0], q[i][1]); x.closePath(); x.moveTo(cx, 6); x.lineTo(cx, 108); x.moveTo(cx - 34, 50); x.lineTo(cx + 34, 50); x.stroke();
+    x.lineWidth = 1.6; x.beginPath(); x.moveTo(cx, 108); x.bezierCurveTo(cx + 18, 126, cx - 20, 144, cx - 4, 174); x.stroke();
+    const bows = [[cx + 6, 124], [cx - 8, 146], [cx - 6, 166]]; for (let i = 0; i < 3; i++) { const b = bows[i]; x.fillStyle = i % 2 ? c0 : '#ffd95e'; x.beginPath(); x.moveTo(b[0], b[1]); x.lineTo(b[0] - 9, b[1] - 5); x.lineTo(b[0] - 9, b[1] + 5); x.closePath(); x.moveTo(b[0], b[1]); x.lineTo(b[0] + 9, b[1] - 5); x.lineTo(b[0] + 9, b[1] + 5); x.closePath(); x.fill(); }
+  }
+}
+function dn3MzSpr(k, v, s) {
+  const key = k + v, q = clamp(Math.ceil(H / VH * 0.95 * 4) / 4, 0.5, 2.25); let c = dn3MzC[key]; if (c && c.q === q) return c;
+  const G = DN3_MZG[k], cv = c ? c.cv : dn3Cv(2, 2); cv.width = Math.ceil(G[0] * q); cv.height = Math.ceil(G[1] * q);
+  const x = cv.getContext('2d'); x.setTransform(q, 0, 0, q, 0, 0); dn3MzPaint(x, k, v);
+  return dn3MzC[key] = { cv, q, w: G[0], h: G[1] };
+}
+function dn3MzBuild() {
+  const R = rng(4242), LW = COLS * T, a = [];
+  const uz = [['ev', 'kule', 'ev'], ['kule', 'ev', 'sato'], ['sato', 'kule', 'ev']], NF = 10;   // uzak sıra: bulut denizinin içinde yapılar
+  for (let i = 0; i < NF; i++) { const u = (i + 0.5 + (R() - 0.5) * 0.4) / NF, seg = u < 0.34 ? 0 : u < 0.67 ? 1 : 2, k = uz[seg][i % 3]; a.push({ k, v: i % 5, x: u * LW, f: 0.11, p: 0, s: k === 'sato' ? 0.74 : k === 'kopru' ? 0.7 : 0.72, yo: -(34 + R() * 16), ys: 0, ph: R() * 6.28 }); }
+  const yk = [['ev', 'ucurtma', 'balon', 'ucurtma'], ['balon', 'balon', 'ucurtma', 'ev'], ['balon', 'kule', 'balon', 'balon']], NN = 24;   // yakın sıra: balonlar, uçurtmalar, evler
+  for (let i = 0; i < NN; i++) { const u = (i + 0.5 + (R() - 0.5) * 0.5) / NN, seg = u < 0.34 ? 0 : u < 0.67 ? 1 : 2, k = yk[seg][i % 4], gok = k === 'balon' || k === 'ucurtma'; a.push({ k, v: (i * 3 + seg) % 5, x: u * LW, f: gok ? 0.2 + R() * 0.1 : 0.22, p: 1, s: k === 'ucurtma' ? 0.5 + R() * 0.16 : gok ? 0.62 + R() * 0.3 : 0.9, yo: -(40 + R() * 20), ys: gok ? 0.13 + R() * 0.27 : 0, ph: R() * 6.28 }); }
+  DN3.mz = a;
+}
+function dn3Manzara(tm, pass) {
+  if (!DN3.mz) dn3MzBuild();
+  const A = DN3.mz, cx = cam.x + VW / 2, fly = DN3.fly;
+  for (let i = 0; i < A.length; i++) {
+    const it = A[i]; if (it.p !== pass) continue;
+    const G = DN3_MZG[it.k], w = G[0] * it.s * S, h = G[1] * it.s * S, sx = W * 0.5 + (it.x - cx) * it.f * S;
+    if (sx + w < 0 || sx - w > W) continue;
+    const sp = dn3MzSpr(it.k, it.v, it.s);
+    if (it.ys) {   // gökte süzülenler: hafifçe salınır
+      const y = DN3.hy - it.ys * H + DN3.dyS * it.f * 0.5 + Math.sin(tm * 0.5 + it.ph) * 7 * S;
+      if (y - h > H || y + h < 0) continue;
+      if (it.k === 'ucurtma') { g.save(); g.translate(sx, y); g.rotate(0.3 + Math.sin(tm * 0.9 + it.ph) * 0.14); g.drawImage(sp.cv, -w / 2, -h * 0.3, w, h); g.restore(); }
+      else g.drawImage(sp.cv, sx - w / 2 + Math.sin(tm * 0.23 + it.ph) * 5 * S, y - h / 2, w, h);
+    } else {   // bulut denizine oturan yapılar: tabanı öndeki bulut sırasının arkasında kalır
+      const y = dn3LayFoot(DN3_LAY[pass ? 3 : 2]) + it.yo * S;
+      if (y - h > H) continue;
+      if (fly > 0.5 && pass) continue;
+      g.drawImage(sp.cv, sx - w / 2, y - h, w, h);
+    }
+  }
+}
+
 function dn3Hy() {
   const g0 = (DN3.GREF - cam.y) * S, ref = 0.7 * H; DN3.dyS = isFinite(g0) ? clamp(g0 - ref, -0.6 * H, 1.6 * H) : 0;
   return DN3.hy = clamp(0.56 * H + 0.25 * DN3.dyS, 0.3 * H, 0.86 * H);
@@ -507,16 +610,18 @@ function dn3Background(tm) {
   dn3SunPos(); dn3Sun(tm);
   dn3Rainbow(tm);
   const reg = DN3.reg, fin = DN3.finT !== undefined ? smooth(clamp((now - DN3.finT) / 3, 0, 1)) : 0;
-  dn3DrawLayer(DN3_LAY[0], 0.6 + 0.3 * reg.ucus, tm);
-  dn3Haze(hy - 30 * S, 80 * S, 0.3, '#ffe2d0');
+  dn3DrawLayer(DN3_LAY[0], 0.55 + 0.3 * reg.ucus, tm);
+  dn3Haze(hy - 30 * S, 80 * S, 0.1, '#ffe2d0');
   dn3Shapes(tm);
   dn3Islands(tm, false);
   dn3DrawLayer(DN3_LAY[1], 1, tm);
-  dn3Rays(tm, (0.17 + 0.22 * DN3.fly + 0.12 * reg.ucus + 0.1 * fin) * (1 - 0.35 * reg.tepe));
+  dn3Rays(tm, (0.1 + 0.22 * DN3.fly + 0.12 * reg.ucus + 0.1 * fin) * (1 - 0.35 * reg.tepe));
   dn3Birds(tm);
   dn3Islands(tm, true);
+  dn3Manzara(tm, 0);
   dn3DrawLayer(DN3_LAY[2], 1, tm);
-  g.globalCompositeOperation = 'lighter'; dn3Eg('#ffd8a8', DN3.sx, hy + 20 * S, W * (0.6 + 0.25 * DN3.fly), (120 + 40 * DN3.fly) * S, (0.22 + 0.12 * DN3.fly) + 0.1 * Math.sin(tm * 0.45)); g.globalCompositeOperation = 'source-over';   // güneşin bulut denizine vuran ışığı
+  g.globalCompositeOperation = 'lighter'; dn3Eg('#ffd8a8', DN3.sx, hy + 20 * S, W * (0.6 + 0.25 * DN3.fly), (120 + 40 * DN3.fly) * S, (0.1 + 0.12 * DN3.fly) + 0.05 * Math.sin(tm * 0.45)); g.globalCompositeOperation = 'source-over';   // güneşin bulut denizine vuran ışığı
+  dn3Manzara(tm, 1);
   dn3DrawLayer(DN3_LAY[3], 1, tm);
   if (DN3.fly > 0.005 || (reg && reg.ucus > 0.02)) dn3DrawCanyon(tm);   // uçuş koridoru boyunca görkemli kanyon duvarları
   dn3DrawLayer(DN3_LAY[4], 1, tm);
@@ -526,11 +631,11 @@ function dn3Background(tm) {
 }
 
 // ═══════════ zemin: yumuşak bulut kütleleri (ızgara 1) ═══════════
-const DN3_GC = [[0, '#fffbf4'], [16, '#fff1ee'], [44, '#ffe2ea'], [86, '#f8d0e4'], [140, '#e6c4ec'], [190, '#d2baee'], [240, '#c2b0ea']];
-function dn3GA(d) { return d < 56 ? 1 : 1 - smooth(clamp((d - 56) / (DN3_DEPTH - 56), 0, 1)); }
-const DN3_GCW = [[0, '#fff4e4'], [16, '#ffe6d8'], [44, '#ffd2cc'], [86, '#f9bccb'], [140, '#ebb2d6'], [190, '#d8aadc'], [240, '#c8a4e0']];   // Gökkuşağı Tepesi: sıcak altın-pembe
+const DN3_GC = [[0, '#fffdfa'], [14, '#f6ecff'], [36, '#dccaf8'], [72, '#b8a4ee'], [124, '#9684e2'], [184, '#7c70d6'], [240, '#6c64cc']];
+function dn3GA(d) { return d < 120 ? 1 : 1 - smooth(clamp((d - 120) / (DN3_DEPTH - 120), 0, 1)); }
+const DN3_GCW = [[0, '#fffbea'], [14, '#fff0c4'], [36, '#ffd68c'], [72, '#f8ae6c'], [124, '#dc8478'], [184, '#b06a9c'], [240, '#8c5cb4']];   // Gökkuşağı Tepesi: sıcak altın-pembe
 let dn3GPal = DN3_GC;
-const DN3_TP = ['#ffffff', '#fff7f2', '#fde4ec', '#ffe0a0'], DN3_TPW = ['#fff8ec', '#ffeadc', '#fcd2d2', '#ffc878'];   // üst lob: açık, gövde, kenar, kenar ışığı
+const DN3_TP = ['#ffffff', '#fbf4ff', '#d2bcf2', '#ffcc6a'], DN3_TPW = ['#fffdf2', '#fff2cc', '#ffcf86', '#ffa23c'];   // üst lob: açık, gövde, kenar, kenar ışığı
 function dn3GColRGB(d) { const G = dn3GPal; let i = 0; while (i < G.length - 2 && d > G[i + 1][0]) i++; const a = G[i], b = G[i + 1], t = clamp((d - a[0]) / (b[0] - a[0]), 0, 1), A = hex(a[1]), B = hex(b[1]); return [lerp(A[0], B[0], t), lerp(A[1], B[1], t), lerp(A[2], B[2], t)]; }
 function dn3BuildGCol() { DN3.gcol = []; DN3.gcolO = []; DN3.gcolW = []; for (let d = 0; d <= DN3_DEPTH; d += 5) { dn3GPal = DN3_GC; let c = dn3GColRGB(d); DN3.gcol.push(`rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${dn3GA(d).toFixed(3)})`); DN3.gcolO.push(`rgb(${c[0] | 0},${c[1] | 0},${c[2] | 0})`); dn3GPal = DN3_GCW; c = dn3GColRGB(d); DN3.gcolW.push(`rgb(${c[0] | 0},${c[1] | 0},${c[2] | 0})`); } dn3GPal = DN3_GC; }
 const dn3GHex = d => { const c = dn3GColRGB(d); return '#' + ((1 << 24) | ((c[0] | 0) << 16) | ((c[1] | 0) << 8) | (c[2] | 0)).toString(16).slice(1); };
@@ -658,12 +763,12 @@ function dn3SlabPaint(x, w, th, R, a) {   // (0,0) = sol uçta yürüme yüzeyi;
   top.moveTo(th * 0.35, th * 0.5); top.rect(th * 0.2, th * 0.4, w - th * 0.4, th * 0.55);
   for (let qx = th * 0.4; qx < w - th * 0.3; qx += th * (0.5 + R() * 0.4)) { const r = th * (0.28 + R() * 0.18); bot.moveTo(qx + r, th * 0.86); bot.arc(qx, th * 0.86, r, 0, 6.283); }
   x.globalAlpha = a;
-  x.fillStyle = '#d9c2ee'; x.fill(bot);   // alt lila kabarcıklar
+  x.fillStyle = '#9484dc'; x.fill(bot);   // alt lila kabarcıklar
   x.save(); x.translate(1.2, -1.6); x.fillStyle = '#ffdc96'; x.globalAlpha = 0.85 * a; x.fill(top); x.restore(); x.globalAlpha = a;
-  const gr = x.createLinearGradient(0, -th * 0.3, 0, th * 1.1); gr.addColorStop(0, '#ffffff'); gr.addColorStop(0.4, '#fff0f2'); gr.addColorStop(0.75, '#f6d8ea'); gr.addColorStop(1, '#e2c8ee'); x.fillStyle = gr; x.fill(top);
+  const gr = x.createLinearGradient(0, -th * 0.3, 0, th * 1.1); gr.addColorStop(0, '#ffffff'); gr.addColorStop(0.35, '#f8f0ff'); gr.addColorStop(0.7, '#d4c0f4'); gr.addColorStop(1, '#a898e6'); x.fillStyle = gr; x.fill(top);
   x.save(); x.clip(top);
   const lg = x.createRadialGradient(w * 0.7, -th * 0.2, 0, w * 0.7, -th * 0.2, Math.max(w * 0.6, th * 2)); lg.addColorStop(0, 'rgba(255,248,232,0.7)'); lg.addColorStop(1, 'rgba(255,248,232,0)'); x.fillStyle = lg; x.fillRect(-th, -th, w + th * 2, th * 3);
-  x.strokeStyle = '#e6c6e2'; x.globalAlpha = 0.14 * a; for (const l of lobes) { x.lineWidth = l[2] * 0.12; x.beginPath(); x.arc(l[0], l[1], l[2] * 0.95, 0.4, 2.7); x.stroke(); }
+  x.strokeStyle = '#a890e0'; x.globalAlpha = 0.3 * a; for (const l of lobes) { x.lineWidth = l[2] * 0.12; x.beginPath(); x.arc(l[0], l[1], l[2] * 0.95, 0.4, 2.7); x.stroke(); }
   x.restore(); x.globalAlpha = 1;
 }
 const dn3SlabC = new Map();
@@ -920,7 +1025,7 @@ function dn3Foreground(tm) {
   // üst kenar: aşağı sarkan yumuşak bulut tutamları (ters çevrilmiş)
   for (let n = 0; n < 3; n++) {
     const sp = DN3_FG.puff[n], span = 2300, wx = ((n * 760 + 120 - cam.x * 1.22 - tm * 6) % span + span) % span - 520; if (wx > VW + 40) continue;
-    const s = 0.85 + (n % 2) * 0.2, cxs = (wx + 260 * s) * S, a = 0.5 * open * (1 - 0.6 * fly) * (0.35 + 0.65 * dn3Foc(cxs, 60 * S));
+    const s = 0.85 + (n % 2) * 0.2, cxs = (wx + 260 * s) * S, a = 0.2 * open * (1 - 0.6 * fly) * (0.35 + 0.65 * dn3Foc(cxs, 60 * S));
     if (a < 0.02) continue; g.globalAlpha = a; g.save(); g.translate(wx * S, (-44 - n * 8) * S); g.scale(s, -s * 0.8); g.drawImage(sp.c, 0, -300 * S, 520 * S, 300 * S); g.restore();
   }
   // alt kenar: kontrol bölgeleri (sol alt düğme) boş; orta-sağ
@@ -928,7 +1033,7 @@ function dn3Foreground(tm) {
   if (ky < 160) for (let n = 0; n < 3; n++) {   // (ky ≥ 160: tamamen ekranın altında)
     const sp = DN3_FG.puff[(n + 1) % 3], span = 2000, wx = ((n * 690 + 400 - cam.x * 1.5 - tm * 9) % span + span) % span - 520; if (wx > VW + 40) continue;
     const s = 0.75 + (n % 2) * 0.2, cxs = (wx + 260 * s) * S, rx = cxs / W;
-    let a = 0.6 * smooth(clamp((rx - 0.26) / 0.12, 0, 1)) * smooth(clamp((1.02 - rx) / 0.12, 0, 1)) * (0.25 + 0.75 * dn3Foc(cxs, H - 60 * S)) * open;
+    let a = 0.42 * smooth(clamp((rx - 0.26) / 0.12, 0, 1)) * smooth(clamp((1.02 - rx) / 0.12, 0, 1)) * (0.25 + 0.75 * dn3Foc(cxs, H - 60 * S)) * open;
     if (a < 0.02) continue; g.globalAlpha = a; g.drawImage(sp.c, wx * S, H - 150 * s * S + (20 + ky) * S, 520 * s * S, 300 * s * S);
   }
   // uçuşta: yanından hızla geçen büyük sis bulutları (hız hissi), Feza'nın üstüne gelmez

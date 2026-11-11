@@ -10,7 +10,7 @@
 'use strict';
 const DN7={sky:null,dawn:null,vig:null,mtn:[],orman:[],chunks:new Map(),prep:0,fx:{},aurBuf:null,aurC:null,
  lit:[],perde:[],renk:0,sabah:0,fin:0,finT:null,dorukT:null,tamT:null,isiklar:[],nIsik:0,dokulme:[],dokT:0,
- nefesT:0,pirNefesT:1.3,kulubeler:[],camlar:null,uzakKar:0,kare:0,zeminKare:-9,kayCi:0,gokAlt:0,aurKare:-9,durumT:null};
+ nefesT:0,pirNefesT:1.3,kulubeler:[],camlar:null,uzakKar:0,kare:0,zeminKare:-9,kayCi:0,gokAlt:0,aurKare:-9,durumT:null,guc:0,manz:null};
 const dn7Hash=v=>{const s=Math.sin(v*127.1+311.7)*43758.5453;return s-Math.floor(s);};   // sabit sözde rastgele (0..1)
 // Kuzey ışığı / fener renkleri (geyik.js GY_KUZEY ile aynı sıra: i. fener ↔ i. boynuz kristali ↔ i. gök şeridi)
 const DN7_AUR=(typeof GY_KUZEY!=='undefined'&&GY_KUZEY.length>=10)?GY_KUZEY.slice(0,10):['#7dffc4','#ff8fd0','#8fd8ff','#c39bff','#a6ffde','#ffa6c9','#6fe8ff','#e0a8ff','#b8ff9e','#9fb8ff'];
@@ -69,6 +69,8 @@ function dn7Durum(){
  // sabah: 'kuzeyTamam' ile (yoksa finalden 26 sn sonra) pembe-altın gün doğumu
  let sb=0;if(DN7.tamT!==null)sb=smooth(clamp((now-DN7.tamT)/7,0,1));if(DN7.finT!==null)sb=Math.max(sb,smooth(clamp((now-DN7.finT-26)/10,0,1)));
  DN7.sabah=sb;
+ // yol boyunca kuzey ışıkları güçlenir: konum (0..1) ya da yanan fener oranından büyük olanı
+ DN7.guc=Math.max(clamp(P.x/(COLS*T),0,1),DN7.renk);
 }
 // yerel ışık 0..1: yanan her fenerden saniyede 420 birim yayılan, 900 birimde duran yumuşak dalga (sütun başına karede bir kez)
 const DN7_ISIK_C=new Float32Array(1024),DN7_ISIK_T=new Float64Array(1024).fill(-1);
@@ -124,7 +126,7 @@ function dn7FxArt(){
  // yeşile, üst pembe-mora çekilir (gerçek kuzey ışığı), fenerin kendi rengi ortada kalır
  const doy=(h,k)=>{const a=hex(h),m=(a[0]+a[1]+a[2])/3;return '#'+a.map(v=>Math.round(clamp(m+(v-m)*k,0,255)).toString(16).padStart(2,'0')).join('');};
  F.perde=DN7_AUR.map((col,ci)=>sutun(doy(dn7Mix(col,'#2cff7a',.62),1.8),doy(DN7_AUR_UST[ci],1.9),doy(dn7Mix(col,'#c070ff',.2),1.7)));
- F.perdeSonuk=sutun('#8ea4cc','#8a86c0','#8a9cc8');
+ F.perdeSonuk=sutun('#8ea4cc','#8a86c0','#8a9cc8');F.perdeP=sutun('#ff5cc0','#9a6cff','#ff86d6');
  // buz kristali kümesi (karın içinden çıkan, ışık gelince içten parlayan): 3 çeşit
  F.kristal=[0,1,2].map(v=>{const cv=dn7Cv(64,72),c=cv.getContext('2d'),R=rng(71+v*13);c.translate(32,70);
   const n=3+v;for(let k=0;k<n;k++){const an=(k-(n-1)/2)*.32+(R()-.5)*.15,L=22+R()*30,w=4+R()*3;c.save();c.rotate(an);
@@ -353,6 +355,17 @@ function dn7Chunk(i){
    const ex=s>0?(q+1)*T:q*T,sy=t1*T;for(let k=0;k<3;k++){const xx=ex+s*(1+k*3)-s*2,L2=8+QQ()*16;c.fillStyle='rgba(214,232,255,.8)';c.beginPath();c.moveTo(xx-2.6,sy+8);c.lineTo(xx+s*1.5,sy+8+L2);c.lineTo(xx+2.6,sy+8);c.closePath();c.fill();}}}
  // 5) kar kaplı süsler: küçük kar yığınları, kütük, taş; nesne sütunlarından kaçar
  const dolu=q=>NESNELER.some(o=>(Math.abs(o.x-nx(q))<1.8*T&&o.tip!=='tohum'&&o.tip!=='konusma'&&o.tip!=='buzGol')||(o.tip==='kardanMini'&&nx(q)>(o.x0||o.x-700)-T&&nx(q)<(o.x1||o.x+700)+T));   // kardan adam alanı boş kalır
+ // 4b) yakın plan kar ayrıntıları (yalnız çizim): donmuş su birikintisi, yumuşak kar tümseği, kızak izleri, minik buz kristalleri
+ for(let q=Math.floor(L/T)-2;q<=Math.ceil(Rr/T)+1;q++){if(q<2||q>=COLS-3)continue;const sy=topOf(q)*T;
+  if(sy>=1200||topOf(q-1)!==topOf(q)||topOf(q+1)!==topOf(q)||buzda(nx(q))||(q*T>=DN7_GAP0-T&&q*T<DN7_GAP1))continue;const h=dn7Hash(q*1.618+3.3),x=q*T+20;
+  if(h<.1){c.fillStyle='rgba(112,160,232,.6)';c.beginPath();c.ellipse(x,sy+6,27,4.6,0,0,6.283);c.fill();c.fillStyle='rgba(206,232,255,.95)';c.beginPath();c.ellipse(x-3,sy+5.2,19,2.6,0,0,6.283);c.fill();
+   c.fillStyle='#ffffff';c.fillRect(x-14,sy+4,9,1);c.fillRect(x+3,sy+6,5,1);}
+  else if(h<.2){if(dolu(q))continue;c.fillStyle='rgba(100,116,210,.4)';c.beginPath();c.ellipse(x+3,sy+3,46,7,0,0,6.283);c.fill();c.fillStyle='#e9efff';c.beginPath();c.ellipse(x,sy+2,40,15,0,Math.PI,0);c.fill();
+   c.fillStyle='rgba(150,166,232,.45)';c.beginPath();c.ellipse(x+14,sy+2,22,9,0,Math.PI,0);c.fill();c.fillStyle='#ffffff';c.beginPath();c.ellipse(x-9,sy-9,15,2.6,-.12,0,6.283);c.fill();}
+  else if(h<.3&&topOf(q+2)===topOf(q)&&topOf(q+3)===topOf(q)){for(const dy of [11,18]){c.strokeStyle='rgba(96,112,200,.5)';c.lineWidth=2;c.beginPath();c.moveTo(x-30,sy+dy);c.quadraticCurveTo(x+30,sy+dy+1.5,x+110,sy+dy);c.stroke();
+    c.strokeStyle='rgba(255,255,255,.75)';c.lineWidth=1;c.beginPath();c.moveTo(x-30,sy+dy+1.8);c.quadraticCurveTo(x+30,sy+dy+3.3,x+110,sy+dy+1.8);c.stroke();}}
+  else if(h<.37&&!dolu(q)){for(const [dx,hh,w] of [[-7,13,4],[0,20,5],[8,11,4]]){c.fillStyle='#d6eeff';c.beginPath();c.moveTo(x+dx-w,sy+2);c.lineTo(x+dx+1,sy-hh);c.lineTo(x+dx+w,sy+2);c.closePath();c.fill();
+    c.fillStyle='rgba(120,156,236,.55)';c.beginPath();c.moveTo(x+dx+1,sy-hh);c.lineTo(x+dx+w,sy+2);c.lineTo(x+dx+1,sy+2);c.closePath();c.fill();}c.fillStyle='#eef3ff';c.beginPath();c.ellipse(x,sy+2,14,3.4,0,0,6.283);c.fill();}}
  for(let q=Math.floor(L/T);q<=Math.ceil(Rr/T);q++){if(q<1||q>=COLS-1)continue;const QQ=rng(q*977+5);if(QQ()>.3)continue;const sy=topOf(q)*T;
   if(sy>=1200||topOf(q-1)!==topOf(q)||topOf(q+1)!==topOf(q)||dolu(q)||buzda(nx(q)))continue;const x=q*T+20,k=QQ();
   if(k<.45){c.fillStyle='rgba(100,116,210,.45)';c.beginPath();c.ellipse(x,sy+2,22,7,0,0,6.283);c.fill();c.fillStyle='#eef3ff';c.beginPath();c.ellipse(x-6,sy-4,14,9,0,0,6.283);c.ellipse(x+8,sy-2,12,7,0,0,6.283);c.fill();c.fillStyle='#ffffff';c.beginPath();c.ellipse(x-8,sy-9,6,2.4,0,0,6.283);c.fill();}
@@ -391,6 +404,11 @@ const DN7_TABAN=[{ci:0,x0:-.05,x1:.7,y:.5,hg:.4,amp:.12,k1:3.2,k2:8,sp:.14,ph:.4
 const DN7_DEV=[{ci:0,x0:-.1,x1:1.1,y:.66,hg:.62,amp:.13,k1:3.6,k2:9,sp:.22,ph:1,a:.6,par:.6,n:48},
  {ci:1,x0:-.05,x1:.72,y:.46,hg:.46,amp:.11,k1:3,k2:8,sp:.18,ph:3,a:.5,par:.4,n:40},
  {ci:3,x0:.32,x1:1.1,y:.56,hg:.52,amp:.12,k1:4,k2:7,sp:.2,ph:5,a:.52,par:.8,n:40}];
+// yol boyunca hep yanan geniş perdeler: yukarıda pembe, ortada yeşil, yanda turkuaz (ilerledikçe güçlenir)
+const DN7_YOL=[{ci:1,pm:1,x0:.05,x1:1.1,y:.3,hg:.36,amp:.08,k1:3.4,k2:7.5,sp:.12,ph:2.2,a:.8,par:.5,n:30},
+ {ci:1,pm:1,x0:-.1,x1:.55,y:.5,hg:.3,amp:.07,k1:4.2,k2:6,sp:.1,ph:5.1,a:.5,par:.3,n:22},
+ {ci:8,x0:-.1,x1:.75,y:.62,hg:.5,amp:.11,k1:2.9,k2:8.5,sp:.16,ph:.7,a:.58,par:.7,n:30},
+ {ci:6,x0:.4,x1:1.12,y:.74,hg:.44,amp:.1,k1:3.8,k2:6.5,sp:.14,ph:4.4,a:.5,par:.9,n:28}];
 function dn7PerdeCiz(c,P0,tm,a,ox,hiz,spr){
  // perde: n dilim; her dilim yumuşak bir ışık sütunu (×3 genişlik, komşularıyla karışır). Alt kenar iki dalganın toplamıyla
  // S biçiminde kıvrılır; kıvrımın döndüğü yerde (eğim) ışık katlanır ve parlar; ince ışınlar yükseklik/alfa titreşimiyle.
@@ -407,7 +425,7 @@ function dn7Aurora(tm,vw,vh,yAlt){
  const F=dn7FxArt(),c=DN7.aurC,gece=1-DN7.sabah*.92;if(gece<.02)return;
  // perdeler yavaş dalgalanır: ara tuval iki karede bir yenilenir (JS yarıya iner, göz farkı görmez); yeni fener süpürmesinde her kare
  const yeni=DN7.perde.length&&now-DN7.perde[DN7.perde.length-1].t0<5;
- if(DN7.kare-DN7.aurKare>=2||yeni||DN7.aurKare>DN7.kare){DN7.aurKare=DN7.kare;dn7AurBuf(tm,F,c);}
+ if(DN7.kare-DN7.aurKare>=4||yeni||DN7.aurKare>DN7.kare){DN7.aurKare=DN7.kare;dn7AurBuf(tm,F,c);}
  dn7AurCiz(vw,vh,yAlt,gece,tm);
 }
 function dn7AurBuf(tm,F,c){
@@ -416,10 +434,10 @@ function dn7AurBuf(tm,F,c){
  const ox=-((cam.x*.008)%DN7_AW);
  // gök ışıması: perde renklerinde geniş yumuşak lekeler (büyütülünce göğü renklendirir)
  const gl=(col,x,y,r,a)=>{if(a<=.003)return;c.globalAlpha=a>1?1:a;c.drawImage(glow(col),x-r,y-r*.6,r*2,r*1.2);};
- gl(DN7_AUR[0],DN7_AW*.35,DN7_AH*.6,DN7_AW*.5,.05+R7*.06+fin*.08);
+ const gc=DN7.guc;gl(DN7_AUR[0],DN7_AW*.35,DN7_AH*.6,DN7_AW*.5,.07+gc*.08+fin*.06);gl(DN7_AUR[1],DN7_AW*.74,DN7_AH*.42,DN7_AW*.42,.04+gc*.06);gl(DN7_AUR[2],DN7_AW*.12,DN7_AH*.3,DN7_AW*.36,.03+gc*.05);
  for(let k=0;k<DN7.perde.length;k++){const P0=DN7.perde[k],on=smooth(clamp((now-P0.t0)/3,0,1));gl(DN7_AUR[P0.ci],(P0.x0+P0.x1)*.5*DN7_AW,P0.y*DN7_AH,(P0.x1-P0.x0)*DN7_AW*.45,on*.035);}
  // sönük taban perdeleri: fenerler yandıkça güçlenir
- const ta=(.5+R7*.2+fin*.15)*(1+dor*.3),rk=clamp(R7*2.2+fin,0,1);for(const P0 of DN7_TABAN){if(rk<.99)dn7PerdeCiz(c,P0,tm,ta*P0.a*(1-rk)*1.5,ox,hiz,F.perdeSonuk);if(rk>.01)dn7PerdeCiz(c,P0,tm,ta*P0.a*rk,ox,hiz);}
+ const pk=1/(1+DN7.perde.length*.1),ta=(1.5+gc*1.1+fin*.15)*(1+dor*.3)*pk,rk=clamp(.88+gc+fin,0,1);for(const P0 of DN7_TABAN){if(rk<.99)dn7PerdeCiz(c,P0,tm,ta*P0.a*(1-rk)*1.5,ox,hiz,F.perdeSonuk);if(rk>.01)dn7PerdeCiz(c,P0,tm,ta*P0.a*rk,ox,hiz);}
  // her yanan fenerin perdesi: belirirken bir ışık süpürmesi. Toplam parlaklık sınırlı (perde sayısı arttıkça her biri biraz söner;
  // gök asla beyazlaşmaz, koyu lacivert-mor kalır)
  // yandıkça gök belirgin canlanır: perde başı parlaklık fener oranıyla artar (10/10'da ~2,4 kat), sayıyla bölünür → asla beyazlamaz
@@ -428,9 +446,10 @@ function dn7AurBuf(tm,F,c){
   dn7PerdeCiz(c,P0,tm,(P0.a*on+sup)*(.62+fin*.25+dor*.3)*kSay,ox,hiz);}
  // final: gökyüzünü kaplayan üç dev perde
  const devK=typeof karFinalAn==='function'?.55:.85;   // kar.js finalde kendi perdelerini önde çizer: arka perdeler ölçülü
- if(fin>.01)for(const P0 of DN7_DEV)dn7PerdeCiz(c,P0,tm,P0.a*fin*devK*.8*(1+dor*.3),ox,hiz);
+ {const dv=fin*devK*.8+(1-fin)*(.4+gc*.9)*.8*pk;for(const P0 of DN7_DEV)dn7PerdeCiz(c,P0,tm,P0.a*dv*(1+dor*.3),ox,hiz);
+  const yl=(.7+gc*1.1)*(1-fin*.25)*(pk+(1-pk)*fin*.5);for(const P0 of DN7_YOL)dn7PerdeCiz(c,P0,tm,P0.a*yl,ox,hiz,P0.pm?F.perdeP:undefined);}
  // yavaş renk kayması: yanan perdeler zamanla pembe-yeşil-turkuaz-mor arasında hafifçe döner (sönük perdeler gri kalır)
- const ka=.13*clamp(R7*1.4+fin,0,1);if(ka>.01){c.globalCompositeOperation='source-atop';c.globalAlpha=ka;const o=(tm*7)%512;
+ const ka=.16*clamp(.5+gc+fin,0,1);if(ka>.01){c.globalCompositeOperation='source-atop';c.globalAlpha=ka;const o=(tm*7)%512;
   c.drawImage(F.aurTint,-o,0,512,DN7_AH);c.drawImage(F.aurTint,512-o,0,512,DN7_AH);}
  c.globalAlpha=1;c.globalCompositeOperation='source-over';
 }
@@ -482,6 +501,7 @@ function dn7Backdrop(tm){
   // dağların tepesine kuzey ışığının renk yansıması
   if(layer===0&&DN7.renk>.02){g.globalCompositeOperation='lighter';dn7Glow(DN7_AUR[DN7.kayCi],vw*.4,base-DN7_MH*.35,vw*.6,DN7_MH*.4,(.04+DN7.renk*.08+DN7.fin*.08)*gece);g.globalCompositeOperation='source-over';}
  }
+ dn7Zirveler(vw,tab[2]+DN7_EXT,ort[2],gece);
  // sabah güneşi: ufukta altın ışık
  if(sb>.01){g.globalCompositeOperation='lighter';dn7Glow('#ffd8a8',vw*.6,tab[1]-40,vw*.6,vh*.3,sb*.5);dn7Glow('#fff4d8',vw*.6,tab[1]-30,70,50,sb*.8);g.globalCompositeOperation='source-over';}
  // çam ormanı katmanları; orta katmanda uzak kulübe(ler)
@@ -502,11 +522,116 @@ function dn7KayanYildiz(tm,vw,vh){
  g.globalCompositeOperation='lighter';for(let j=0;j<6;j++){const b=j/6;dn7Glow('#eef2ff',x-Math.cos(ang)*b*60,y-Math.sin(ang)*b*60,4-b*3,4-b*3,a*(1-b)*.8);}
  dn7Glow('#ffffff',x,y,9,9,a);g.globalCompositeOperation='source-over';
 }
+// ════════ Farklı biçimli büyük dağlar: sivri zirve, ikiz tepe, geniş buzullu dağ (yol boyunca sırayla, dağlarla orman arasında) ════════
+const DN7_ZIRVE_YER=[[70,0],[185,1],[300,2],[410,0],[525,1]];
+const DN7_ZIRVE_P=[[0,340,150,150,205,44,236,8,262,62,300,120,480,340],[0,340,110,124,150,72,190,134,236,160,292,52,330,26,382,140,480,340],[0,340,90,150,140,92,200,70,300,64,352,96,402,172,480,340]];
+function dn7ZirveArt(){
+ if(DN7.zirve)return DN7.zirve;const Z=DN7.zirve=[];
+ for(let v=0;v<3;v++){const cv=dn7Cv(480,340),c=cv.getContext('2d'),P0=DN7_ZIRVE_P[v];let ty=340,tx=0;for(let i=0;i<P0.length;i+=2)if(P0[i+1]<ty){ty=P0[i+1];tx=P0[i];}
+  const gr=c.createLinearGradient(0,ty,0,340);gr.addColorStop(0,'#5a60ac');gr.addColorStop(1,'#4a4f96');c.fillStyle=gr;c.beginPath();c.moveTo(P0[0],P0[1]);for(let i=2;i<P0.length;i+=2)c.lineTo(P0[i],P0[i+1]);c.closePath();c.fill();
+  c.save();c.clip();
+  // ayın vurduğu sağ yamaç
+  c.fillStyle='rgba(150,164,232,.3)';c.beginPath();c.moveTo(tx,ty);c.lineTo(tx+250,340);c.lineTo(tx+40,340);c.lineTo(tx+14,ty+120);c.closePath();c.fill();
+  // kar başlığı: alt kenarı dişli
+  const cy=ty+[78,74,30][v];for(const [col,dy] of [['#8e9ade',10],['#dfe5ff',0]]){c.fillStyle=col;c.beginPath();c.moveTo(0,0);c.lineTo(480,0);c.lineTo(480,cy+dy);for(let x=480,k=0;x>=0;x-=24,k++)c.lineTo(x,cy+dy+(k%2?20:-8));c.closePath();c.fill();}
+  c.strokeStyle='rgba(40,44,110,.3)';c.lineWidth=2;for(let k=0;k<6;k++){const x=tx-70+k*30;c.beginPath();c.moveTo(x,cy+20);c.quadraticCurveTo(x+8,cy+80,x-4+k*3,cy+150);c.stroke();}
+  c.restore();Z.push(cv);}
+ return Z;
+}
+function dn7Zirveler(vw,yb,alt,gece){
+ const Z=dn7ZirveArt();
+ for(let i=0;i<DN7_ZIRVE_YER.length;i++){const A=DN7_ZIRVE_YER[i],sx=vw*.5+(A[0]*T-(cam.x+VW*.5))*.11;if(sx<-240||sx>vw+240)continue;
+  const hh=Math.min(320,alt-(yb-320));if(hh<=0)continue;g.globalAlpha=.55+gece*.45;g.drawImage(Z[A[1]],0,0,480,340*hh/320,sx-225,yb-320,450,hh);g.globalAlpha=1;}
+}
+// ════════ Yol boyunca değişen manzara: kar köyü, iglolar, donmuş şelale, buz kemeri, ren geyiği sürüsü, fenerli çam ════════
+// Her biri bir kez ekran dışı tuvale boyanır (2× çözünürlük; köken: alt orta = tepeciğin üstü); karede yalnız resim + birkaç ışık.
+const DN7_MANZ_YER=[[60,'iglo'],[95,'fcam'],[128,'koy'],[165,'geyik'],[200,'kemer'],[262,'selale'],[295,'iglo'],[320,'koy'],
+ [360,'selale'],[395,'geyik'],[430,'kemer'],[455,'fcam'],[485,'koy'],[515,'kemer'],[545,'geyik']];
+function dn7ManzArt(){
+ // resimler ekrandaki boyutunda (cihaz pikseli 1:1) boyanır: karede küçültme yok (ucuz ve net); ekran ölçeği değişirse yenilenir
+ const kk=Math.round(clamp(S*.9,.5,2.4)*20)/20;if(DN7.manz&&DN7.manzK===kk)return DN7.manz;DN7.manzK=kk;const M=DN7.manz={},R=rng(4242);
+ const yeni=()=>{const cv=dn7Cv(Math.ceil(300*kk),Math.ceil(200*kk)),c=cv.getContext('2d');c.scale(kk,kk);c.translate(150,192);cv.isik=[];return [cv,c];};
+ const el=(c,col,x,y,rx,ry)=>{c.fillStyle=col;c.beginPath();c.ellipse(x,y,rx,ry,0,0,6.283);c.fill();};
+ // kar köyü: dört küçük ev (karlı çatı, ışıklı pencere, baca), aralarında çamlar
+ {const [cv,c]=yeni();dn7Cam(c,-70,2,50,DN7_CAMK[2],rng(11),false);dn7Cam(c,58,2,58,DN7_CAMK[2],rng(12),false);dn7Cam(c,128,2,42,DN7_CAMK[2],rng(13),false);
+  const ev=(x,w,h,rh,col)=>{c.fillStyle=col;c.fillRect(x-w/2,-h,w,h+2);c.fillStyle='rgba(20,18,60,.28)';c.fillRect(x+w*.22,-h,w*.28,h+2);
+   c.fillStyle='#3a2f5c';c.fillRect(x+w*.2,-h-rh*.95,6,rh*.7);el(c,'#eef3ff',x+w*.2+3,-h-rh*.95,5,2.5);
+   c.fillStyle=col;c.beginPath();c.moveTo(x-w/2,-h+1);c.lineTo(x,-h-rh+4);c.lineTo(x+w/2,-h+1);c.closePath();c.fill();
+   c.fillStyle='#b9c6f2';c.beginPath();c.moveTo(x-w/2-6,-h+4);c.lineTo(x,-h-rh+2);c.lineTo(x+w/2+6,-h+4);c.quadraticCurveTo(x,-h-rh*.5,x-w/2-6,-h+4);c.fill();
+   c.fillStyle='#eef3ff';c.beginPath();c.moveTo(x-w/2-7,-h+1);c.lineTo(x,-h-rh-2);c.lineTo(x+w/2+7,-h+1);c.quadraticCurveTo(x,-h-rh*.62,x-w/2-7,-h+1);c.fill();
+   const wy=-h*.52;for(const wx of w>50?[-w*.26,w*.06]:[-w*.14]){c.fillStyle='#ffd27a';c.fillRect(x+wx-4,wy-5,8,9);c.fillStyle='#fff0c0';c.fillRect(x+wx-4,wy-5,8,3);
+    c.strokeStyle='#3a2f5c';c.lineWidth=1;c.strokeRect(x+wx-4,wy-5,8,9);cv.isik.push([x+wx,wy,'#ffc070',15]);}
+   c.fillStyle='#2e2550';c.fillRect(x+w*.24,-13,7,14);el(c,'#e6edff',x,2,w*.72,4);};
+  ev(-100,40,26,20,'#5a4a86');ev(-40,56,38,28,'#4d3f78');ev(26,44,30,22,'#5e4c8c');ev(90,52,34,26,'#4a3c74');M.koy=cv;}
+ // iglolar: kar bloklarından kubbe, içi sıcak ışıklı giriş
+ {const [cv,c]=yeni();
+  const ig=(x,r)=>{const gr=c.createLinearGradient(x-r,0,x+r,0);gr.addColorStop(0,'#f6f9ff');gr.addColorStop(.6,'#cfdcfa');gr.addColorStop(1,'#93a6de');c.fillStyle=gr;c.beginPath();c.ellipse(x,2,r,r*.82,0,Math.PI,0);c.fill();
+   c.save();c.beginPath();c.ellipse(x,2,r,r*.82,0,Math.PI,0);c.clip();c.strokeStyle='rgba(110,130,205,.5)';c.lineWidth=1;const bh=r*.82/5;
+   for(let j=0;j<5;j++){const y=2-bh*j;c.beginPath();c.moveTo(x-r,y);c.lineTo(x+r,y);c.stroke();for(let q=-r+(j%2?r*.15:0);q<r;q+=r*.3){c.beginPath();c.moveTo(x+q,y);c.lineTo(x+q,y-bh);c.stroke();}}
+   c.restore();const ex=x-r*.5,er=r*.38;
+   c.fillStyle='#e4ecff';c.beginPath();c.ellipse(ex,2,er,er*1.08,0,Math.PI,0);c.fill();c.fillStyle='#ffb85c';c.beginPath();c.ellipse(ex,2,er*.64,er*.78,0,Math.PI,0);c.fill();
+   c.fillStyle='#ffe6a8';c.beginPath();c.ellipse(ex,2,er*.36,er*.46,0,Math.PI,0);c.fill();cv.isik.push([ex,-er*.3,'#ffb060',r*.55]);
+   el(c,'#ffffff',x+r*.1,2-r*.8,r*.4,2.2);el(c,'#e6edff',x,3,r*1.15,3.5);};
+  dn7Cam(c,118,2,60,DN7_CAMK[2],rng(14),false);ig(56,34);ig(-46,50);M.iglo=cv;}
+ // donmuş şelale: koyu kaya yamacı, ortasında buz sütunları, dibinde donmuş gölcük
+ {const [cv,c]=yeni();
+  c.fillStyle='#434a8e';c.beginPath();c.moveTo(-132,3);c.lineTo(-118,-70);c.lineTo(-92,-112);c.lineTo(-60,-126);c.lineTo(-34,-152);c.lineTo(34,-154);c.lineTo(62,-130);c.lineTo(96,-118);c.lineTo(120,-66);c.lineTo(134,3);c.closePath();c.fill();
+  c.fillStyle='#333a7a';c.beginPath();c.moveTo(34,-154);c.lineTo(62,-130);c.lineTo(96,-118);c.lineTo(120,-66);c.lineTo(134,3);c.lineTo(60,3);c.lineTo(46,-80);c.closePath();c.fill();
+  c.strokeStyle='#c4d0f6';c.lineWidth=5;c.lineJoin='round';c.lineCap='round';c.beginPath();c.moveTo(-121,-58);c.lineTo(-92,-112);c.lineTo(-60,-126);c.lineTo(-34,-152);c.lineTo(34,-154);c.lineTo(62,-130);c.lineTo(96,-118);c.lineTo(122,-56);c.stroke();
+  const gr=c.createLinearGradient(0,-156,0,0);gr.addColorStop(0,'#f8fcff');gr.addColorStop(.5,'#c4e6fc');gr.addColorStop(1,'#8fc2f2');c.fillStyle=gr;
+  c.beginPath();c.moveTo(-36,-156);c.lineTo(36,-156);c.quadraticCurveTo(40,-70,52,2);c.lineTo(-52,2);c.quadraticCurveTo(-40,-70,-36,-156);c.fill();
+  c.strokeStyle='rgba(255,255,255,.75)';c.lineWidth=1.6;for(let j=0;j<9;j++){const x=-30+j*7.5+R()*3;c.beginPath();c.moveTo(x,-152);c.lineTo(x*1.3,-8-R()*30);c.stroke();}
+  c.strokeStyle='rgba(90,140,220,.45)';c.lineWidth=1.2;for(let j=0;j<7;j++){const x=-26+j*8.5;c.beginPath();c.moveTo(x,-140+R()*30);c.lineTo(x*1.3,-30-R()*20);c.stroke();}
+  el(c,'#f6faff',0,-156,44,7);el(c,'#a9d4f7',0,3,80,6.5);el(c,'#eaf6ff',-12,1.5,40,2.2);cv.isik.push([0,-90,'#9fd0ff',36]);M.selale=cv;}
+ // buz kemeri: yarı saydam mavi kemer, dibinde buz kristalleri
+ {const [cv,c]=yeni();const gr=c.createLinearGradient(-80,-130,80,0);gr.addColorStop(0,'#eefbff');gr.addColorStop(.5,'#a6dcf8');gr.addColorStop(1,'#6f9be6');c.fillStyle=gr;
+  c.beginPath();c.moveTo(-94,3);c.quadraticCurveTo(-86,-152,6,-140);c.quadraticCurveTo(98,-128,92,3);c.lineTo(58,3);c.quadraticCurveTo(62,-96,4,-102);c.quadraticCurveTo(-52,-106,-58,3);c.closePath();c.fill();
+  c.strokeStyle='rgba(255,255,255,.85)';c.lineWidth=2.2;c.beginPath();c.moveTo(-86,-20);c.quadraticCurveTo(-78,-138,4,-132);c.stroke();
+  c.strokeStyle='rgba(70,110,210,.4)';c.lineWidth=1.2;c.beginPath();c.moveTo(-74,-62);c.lineTo(-54,-44);c.moveTo(30,-130);c.lineTo(38,-99);c.moveTo(88,-50);c.lineTo(62,-42);c.moveTo(-30,-134);c.lineTo(-24,-104);c.stroke();
+  const kr=(x,h,w,e)=>{c.fillStyle='#dcf2ff';c.beginPath();c.moveTo(x-w,3);c.lineTo(x+e,-h);c.lineTo(x+w,3);c.closePath();c.fill();c.fillStyle='rgba(110,150,230,.5)';c.beginPath();c.moveTo(x+e,-h);c.lineTo(x+w,3);c.lineTo(x+e*.5,3);c.closePath();c.fill();};
+  kr(-120,46,10,-4);kr(-106,28,8,3);kr(114,54,11,5);kr(130,30,8,-2);kr(-8,24,7,0);kr(8,15,5,2);
+  el(c,'#f6faff',4,-140,26,4);cv.isik.push([0,-122,'#cfeeff',46],[114,-50,'#cfeeff',20],[-120,-42,'#cfeeff',18]);M.kemer=cv;}
+ // ren geyiği sürüsü: tepenin üstünde sakin duran koyu mavi siluetler (biri yavru)
+ {const [cv,c]=yeni();
+  const ren=(x,s,yon)=>{c.save();c.translate(x,2);c.scale(s*yon,s);c.fillStyle='#252d6a';
+   c.beginPath();c.ellipse(0,-24,19,9.5,0,0,6.283);c.fill();for(const lx of [-14,-9,9,14])c.fillRect(lx-1.6,-20,3.2,20);
+   c.beginPath();c.moveTo(11,-30);c.lineTo(20,-45);c.lineTo(27,-42);c.lineTo(19,-21);c.closePath();c.fill();
+   c.beginPath();c.ellipse(25,-45,7.5,4.6,.25,0,6.283);c.fill();c.beginPath();c.ellipse(-19,-27,3,2.2,0,0,6.283);c.fill();
+   c.strokeStyle='#252d6a';c.lineWidth=1.8;c.lineCap='round';c.beginPath();
+   c.moveTo(22,-48);c.quadraticCurveTo(16,-60,22,-70);c.moveTo(18,-58);c.lineTo(11,-64);c.moveTo(19,-64);c.lineTo(14,-72);
+   c.moveTo(25,-49);c.quadraticCurveTo(31,-60,27,-71);c.moveTo(29,-60);c.lineTo(35,-66);c.stroke();
+   c.fillStyle='rgba(175,195,255,.55)';c.beginPath();c.ellipse(-2,-32,14,2,0,0,6.283);c.fill();c.restore();};
+  ren(-104,.8,1);ren(-54,1,1);ren(-10,.55,1);ren(42,1.05,-1);ren(100,.85,1);M.geyik=cv;}
+ // fenerli çam: büyük karlı çam, dallarında renk renk küçük fenerler, tepesinde yıldız
+ {const [cv,c]=yeni();dn7Cam(c,-84,2,70,DN7_CAMK[2],rng(21),false);dn7Cam(c,88,2,84,DN7_CAMK[2],rng(22),false);dn7Cam(c,0,2,176,DN7_CAMK[3],rng(27),true);
+  const rk=['#ffd27a','#ff9fc8','#8fe8ff','#b8ff9e'];
+  for(let j=0;j<13;j++){const u=j/12,y=-26-u*126,hw=(1-u*.82)*40,x=(j%2?1:-1)*hw*(.3+R()*.55);
+   el(c,rk[j%4],x,y,3.6,4.4);el(c,'#ffffff',x-.9,y-1.3,1.2,1.5);if(j%2===0)cv.isik.push([x,y,rk[j%4],13]);}
+  el(c,'#fff2b0',0,-168,4.5,4.5);cv.isik.push([0,-168,'#fff2b0',20]);M.fcam=cv;}
+ // ışık hâleleri resme bir kez basılır (karede yalnız iki göz kırpan ışık çizilir); buz, kuzey ışığının yeşil-pembe rengini alır
+ for(const k in M){const cv=M[k],c=cv.getContext('2d');
+  if(k==='selale'||k==='kemer'){c.globalCompositeOperation='source-atop';for(const [x,y,r,col] of [[-30,-80,110,'125,255,196'],[40,-40,90,'255,143,208']]){const gr=c.createRadialGradient(x,y,2,x,y,r);gr.addColorStop(0,'rgba('+col+',.3)');gr.addColorStop(1,'rgba('+col+',0)');c.fillStyle=gr;c.fillRect(x-r,y-r,r*2,r*2);}}
+  c.globalCompositeOperation='lighter';
+  for(const I of cv.isik){const r=I[3],col=dn7Rgb(I[2]),gr=c.createRadialGradient(I[0],I[1],0,I[0],I[1],r);gr.addColorStop(0,'rgba('+col+',.5)');gr.addColorStop(.4,'rgba('+col+',.2)');gr.addColorStop(1,'rgba('+col+',0)');c.fillStyle=gr;c.fillRect(I[0]-r,I[1]-r,r*2,r*2);}
+  c.globalCompositeOperation='source-over';}
+ return M;
+}
+function dn7ManzCiz(M,tm,bx,by){
+ const cv=dn7ManzArt()[M.t],gc=1-DN7.sabah;
+ g.fillStyle='#a8bce6';g.beginPath();g.ellipse(bx,by+5,150,14,0,0,6.283);g.fill();
+ g.drawImage(cv,bx-135,by-167,270,180);
+ const L=cv.isik,n=L.length;if(gc<.03||!n)return;g.globalCompositeOperation='lighter';
+ for(let q=0;q<2;q++){const u=tm*.6+q*.5,I=L[(Math.floor(u)*3+q+(M.x|0))%n];dn7Glow(I[2],bx+I[0]*.9,by+6+I[1]*.9,I[3]*1.2,I[3]*1.2,.6*Math.sin((u-Math.floor(u))*Math.PI)*gc);}
+ g.globalCompositeOperation='source-over';
+}
 // uzak kulübe: orta orman katmanında, belirli dünya noktalarına (DEKOR7.kulube) eşlenir; pencereler titrer, bacadan duman
 function dn7Kulube(tm,vw,vh,f,base){
  const F=DN7.fx,D7=typeof DEKOR7!=='undefined'?DEKOR7:null,ax=D7&&D7.kulube?D7.kulube.x:236*T;
- for(const A of [ax,25*T,128*T,310*T,500*T]){const sx=vw*.5+(A-(cam.x+VW*.5))*f;if(sx<-160||sx>vw+160)continue;
-  const k=.6,bx=sx,by=base-185;g.fillStyle='#88a0d4';g.beginPath();g.ellipse(bx,by+95,190,100,0,Math.PI,0);g.fill();g.fillStyle='#5c74aa';g.fillRect(bx-190,by+94,380,120);g.fillStyle='#a8bce6';g.beginPath();g.ellipse(bx,by+2,95,12,0,0,6.283);g.fill();g.drawImage(F.kulube,bx-120*k,by-180*k,240*k,190*k);
+ if(!DN7.manzL){DN7.manzL=[{x:ax,t:null},{x:25*T,t:null}];for(const [q,t] of DN7_MANZ_YER)DN7.manzL.push({x:q*T,t});}
+ for(const M of DN7.manzL){const A=M.x,sx=vw*.5+(A-(cam.x+VW*.5))*f;if(sx<-160||sx>vw+160)continue;
+  const k=.6,bx=sx,by=base-185;g.fillStyle='#88a0d4';g.beginPath();g.ellipse(bx,by+95,190,100,0,Math.PI,0);g.fill();g.fillStyle='#5c74aa';g.fillRect(bx-190,by+94,380,120);g.fillStyle='#a8bce6';g.beginPath();g.ellipse(bx,by+2,95,12,0,0,6.283);g.fill();
+  if(M.t){dn7ManzCiz(M,tm,bx,by);g.globalAlpha=.3;g.drawImage(F.pus[1],bx-176,base-150,352,170);g.globalAlpha=1;continue;}
+  g.drawImage(F.kulube,bx-120*k,by-180*k,240*k,190*k);
   g.globalCompositeOperation='lighter';
   for(const wx of [-34,30]){const fl=.85+.15*Math.sin(tm*5+wx)*Math.sin(tm*7.7+wx*.3);dn7Glow('#ffc070',bx+wx*k,by-50*k,30*k,24*k,.85*fl);}
   dn7Glow('#ffb060',bx,by-30*k,170*k,80*k,.28);
@@ -621,6 +746,15 @@ function dn7World(tm){
  // finalde tepeye inen kuzey ışığı parıltısı
  if(DN7.fin>.01&&BOLUM.tepe){const nb=.8+.2*Math.sin(tm*1.5);dn7Glow(DN7_AUR[0],BOLUM.tepe.x,BOLUM.tepe.y-80,420,200,DN7.fin*.12*nb);dn7Glow(DN7_AUR[1],BOLUM.tepe.x+180,BOLUM.tepe.y-120,260,160,DN7.fin*.08*nb);}
  g.globalCompositeOperation='source-over';g.globalAlpha=1;
+ dn7KarYansi(tm);
+}
+// kuzey ışıklarının karın ve buzun üstüne düşen hafif renkli yansıması: yavaşça gezinen dört geniş renk havuzu (normal karışım:
+// beyaz karda toplamalı ışık görünmez)
+const DN7_YANSI=[0,2,1,3];
+function dn7KarYansi(tm){
+ const gece=1-DN7.sabah;if(gece<.05)return;const a=(.2+DN7.guc*.2+DN7.fin*.08)*gece;
+ for(let j=0;j<4;j++){const x=cam.x+VW*(j+.5)/4+Math.sin(tm*.17+j*2.1)*VW*.12,y=dn7Surface(x);if(y>=1200)continue;
+  dn7Glow(DN7_AUR[DN7_YANSI[j]],x,y+9,VW*.2,26,a*(.75+.25*Math.sin(tm*.4+j*1.7)));}
 }
 
 // ════════ KAR YAĞIŞI: hiç durmayan, katmanlı (uzak ince, orta, yakın iri, en önde bulanık) — sabit havuz, önbellekli sprite ════════
