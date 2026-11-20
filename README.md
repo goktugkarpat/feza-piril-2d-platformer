@@ -5,7 +5,7 @@ Feza, uyku arkadaşı peluş ejderha Pırıl'a sarılıp uyur. **Her gece başka
 Her rüya sabah Feza'nın yatağında uyanmasıyla biter; bitirilen rüyaya altın yıldız gelir.
 Korkutucu hiçbir şey, kaybetmek yoktur. Feza okuma bilmediği için her şey Pırıl'ın sesiyle ve ışıklı ipuçlarıyla anlatılır.
 
-**Oyna:** https://goktugkarpat.github.io/feza-piril-2d-platformer/
+**Oyna:** https://goktugkarpat.github.io/feza-piril-isikli-ruyalar/
 
 ![Yatak başı ve rüya kavanozları rafı](ekran/secim.jpg)
 
@@ -42,7 +42,7 @@ Korkutucu hiçbir şey, kaybetmek yoktur. Feza okuma bilmediği için her şey P
 
 ## Nasıl açılır
 
-- **İnternette:** https://goktugkarpat.github.io/feza-piril-2d-platformer/
+- **İnternette:** https://goktugkarpat.github.io/feza-piril-isikli-ruyalar/
 - **iPad'de uygulama gibi:**
   1. iPad'de **Safari**'yi aç ve yukarıdaki adrese git.
   2. Üstteki **Paylaş** düğmesine dokun (kutudan çıkan ok).
