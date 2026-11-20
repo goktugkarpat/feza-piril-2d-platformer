@@ -2699,7 +2699,7 @@ function shBaslikSprite() {   // "Feza ve Pırıl" + altyazı: arayuz.js başlı
     x.fillText('Feza ve Pırıl', W / 2, pad + fs * 0.2 + anaPay);
     x.font = `italic 400 ${fs2}px ${FS}`;
     if (renk) { const gr = x.createLinearGradient(0, pad + fs * 0.5 - altPay, 0, pad + fs * 1.05 - altPay); gr.addColorStop(0, '#fff6dc'); gr.addColorStop(1, '#bff4ff'); x.fillStyle = gr; }
-    x.fillText('Her gece başka bir rüya', W / 2, pad + fs * 0.88 - altPay);
+    x.fillText('Işıklı Rüyalar', W / 2, pad + fs * 0.88 - altPay);
   };
   const gx = glow.getContext('2d');
   for (const [blur, col] of [[fs * 0.5, 'rgba(160,120,255,0.9)'], [fs * 0.2, 'rgba(220,200,255,0.9)']]) {
